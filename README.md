@@ -24,3 +24,6 @@ To run the project:
       
   5. Debug the project by clicking 'Debug'.      
       
+
+
+Information about UMSATS and our new rocketry division can be found at: http://www.umsats.ca/rocketry/
