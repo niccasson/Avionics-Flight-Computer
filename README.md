@@ -1,7 +1,7 @@
 # Avionics
 Flight Computer Software for the 2019 Rocket.
 
-The 'Avionics Software - Atollic' contains the main flight software project, created in Atollic TrueSTUDIO.
+The 'Avionics Software - Atollic' folder contains the main flight software project, created in Atollic TrueSTUDIO.
 The project runs on the STM32F401RE Nucleo development board.
 
 To run the project:
