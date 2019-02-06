@@ -4,6 +4,7 @@
 #include "stm32f4xx_hal_uart.h"
 #include "stm32f4xx_hal_conf.h"
 #include <string.h>
+#include <stdlib.h>
 
 #define TIMEOUT_MAX 0xFFFF
 #define BUFFER_SIZE 2048
@@ -83,14 +84,22 @@ void receive_command(void){
 	buffrx[i] = '\0'; //string terminator
 }
 
+/** Handle the command in the buffrx */
+void handle_command(void){
+	char* output = (char*) malloc(BUFFER_SIZE * sizeof(char));
 
-/**
- * @brief COMMAND: Display help menu
- * @param void
- * @return void
- */
-void help(void){
-	transmit_line("I am here to help you!");
+
+	if(strcmp((char*) buffrx, "help") == 0){
+		help();
+	}
+	else if(strcmp((char*) buffrx, "read") == 0){
+		read();
+	}
+	else{
+		sprintf(output, "Command [%s] not recognized.", buffrx);
+		transmit_line(output);
+	}
+
 }
 
 /**
@@ -101,12 +110,42 @@ void help(void){
 void vTaskUART_CLI(void *pvParameters){
 	g_uart = (UART_HandleTypeDef *) pvParameters;
 
+	help(); //display help on start up
+
 	/* As per most FreeRTOSD tasks, this task is implemented in an infinite loop. */
 	for(;;){
 		transmit(">> ");
 
 		receive_command(); //puts input into buffrx
 
-		transmit_line(buffrx);
+		handle_command(); //handles command sitting in buffrx
+
+		//transmit_line(buffrx);
 	}
 } //vTaskUART_CLI END
+
+
+/*** Commands ****/
+
+void intro(void){
+	transmit_line("========== Welcome to Xtract ==========\r\n"
+				"This is a command line interface tool made by the Avionics subdivison of the Rockets team.\r\n\r\n"
+				"Here are some commands to get you started:");
+	help();
+}
+
+/**
+ * @brief COMMAND: Display help menu
+ * @param void
+ * @return void
+ */
+void help(void){
+	transmit_line("Commands:\r\n"
+					"\t[help] - displays the help menu and more commands\r\n"
+					"\t[read] - reads the test array to your console");
+}
+
+
+void read(void){
+	transmit_line("1010101001001010010100101.... haha like that, right?");
+}
