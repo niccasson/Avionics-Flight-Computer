@@ -49,13 +49,15 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  xTaskCreate(	vTaskUART_CLI, 	 /* Pointer to the function that implements the task */
+  if(xTaskCreate(	vTaskUART_CLI, 	 /* Pointer to the function that implements the task */
     		  	"xtract CLI", /* Text name for the task. This is only to facilitate debugging */
     		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 &huart2,		 /* This example does not use the task parameter. */
+				 &huart2,	/* pointer to the huart object */
 				 1,			 /* This task will run at priorirt 1. */
 				 NULL		 /* This example does not use the task handle. */
-      	  	  );
+      	  	  ) == -1){
+	  Error_Handler();
+  }
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
@@ -119,6 +121,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_USART2_CLK_ENABLE();
 
   GPIO_InitTypeDef GPIO_InitStruct;
 
