@@ -16,8 +16,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include <xtract.h>
-
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart2;
@@ -27,7 +25,7 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
-static void MX_USART2_UART_Init(void);
+//static void MX_USART2_UART_Init(void);
 
 int main(void)
 {
@@ -42,17 +40,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
-  MX_USART2_UART_Init();
+  UART_HandleTypeDef* huart2_ptr = MX_HAL_UART2_Init(); //UART uses GPIO pin 2 & 3
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  if(xTaskCreate(	vTaskUART_CLI, 	 /* Pointer to the function that implements the task */
+  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
     		  	"xtract CLI", /* Text name for the task. This is only to facilitate debugging */
     		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 &huart2,	/* pointer to the huart object */
+				 huart2_ptr,	/* pointer to the huart object */
 				 1,			 /* This task will run at priorirt 1. */
 				 NULL		 /* This example does not use the task handle. */
       	  	  ) == -1){
@@ -121,7 +119,6 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_USART2_CLK_ENABLE();
 
   GPIO_InitTypeDef GPIO_InitStruct;
 
@@ -129,38 +126,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin       = GPIO_PIN_5;
   GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
   HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
-
-  /* Setup UART2 TX Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_2; //USART_TX_Pin
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-   /* Setup UART2 RX Pin */
-   GPIO_InitStruct.Pin = GPIO_PIN_3; //USART_RX_Pin
-   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-   GPIO_InitStruct.Pull = GPIO_NOPULL;
-   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-}
-
-static void MX_USART2_UART_Init(void)
-{
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
 
 void StartDefaultTask(void const * argument)
