@@ -18,14 +18,12 @@
 #include "cmsis_os.h"
 
 osThreadId defaultTaskHandle;
-UART_HandleTypeDef huart2;
-
+UART_HandleTypeDef huart2_ptr; //global var to be passed to vTask_xtract
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
-//static void MX_USART2_UART_Init(void);
 
 int main(void)
 {
@@ -36,11 +34,9 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-
-
   /* Initialize all configured peripherals */
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
-  UART_HandleTypeDef* huart2_ptr = MX_HAL_UART2_Init(); //UART uses GPIO pin 2 & 3
+  MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
@@ -48,9 +44,9 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
-    		  	"xtract CLI", /* Text name for the task. This is only to facilitate debugging */
+    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
     		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 huart2_ptr,	/* pointer to the huart object */
+				 (void*) &huart2_ptr,	/* pointer to the huart object */
 				 1,			 /* This task will run at priorirt 1. */
 				 NULL		 /* This example does not use the task handle. */
       	  	  ) == -1){
