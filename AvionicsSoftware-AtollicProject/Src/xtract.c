@@ -6,16 +6,17 @@
 * @retval void
 */
 void vTask_xtract(void *pvParameters){
-	g_uart = (UART_HandleTypeDef *) pvParameters;
+
+	uart = (UART_HandleTypeDef*) pvParameters;
 
 	help(); //display help on start up
 	char *cmd_buf = (char*) malloc(sizeof(char) * BUFFER_SIZE); //command buffer
 
 	/* As per most FreeRTOSD tasks, this task is implemented in an infinite loop. */
 	for(;;){
-		transmit(">> ");
+		transmit(uart, ">> ");
 
-		cmd_buf = receive_command(); //puts input into buffrx
+		cmd_buf = receive_command(uart); //puts input into buffrx
 
 		handle_command(cmd_buf); //handles command sitting in buffrx
 
@@ -36,13 +37,13 @@ void handle_command(char* command){
 	}
 	else{
 		sprintf(output, "Command [%s] not recognized.", command);
-		transmit_line(output);
+		transmit_line(uart, output);
 	}
 
 }
 
 void intro(void){
-	transmit_line("========== Welcome to Xtract ==========\r\n"
+	transmit_line(uart, "========== Welcome to Xtract ==========\r\n"
 				"This is a command line interface tool made by the Avionics subdivison of the Rockets team.\r\n\r\n"
 				"Here are some commands to get you started:");
 	help();
@@ -54,12 +55,12 @@ void intro(void){
  * @return void
  */
 void help(void){
-	transmit_line("Commands:\r\n"
+	transmit_line(uart, "Commands:\r\n"
 					"\t[help] - displays the help menu and more commands\r\n"
 					"\t[read] - reads the test array to your console");
 }
 
 
 void read(void){
-	transmit_line("1010101001001010010100101.... haha like that, right?");
+	transmit_line(uart, "1010101001001010010100101.... haha like that, right?");
 }

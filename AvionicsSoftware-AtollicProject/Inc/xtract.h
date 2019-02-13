@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include "stm32f4xx_hal_uart_cli.h"
 
+UART_HandleTypeDef* uart;
+
 void vTask_xtract(void *pvParameters);
 void handle_command(char* command);
 void intro(void); //display on start up
