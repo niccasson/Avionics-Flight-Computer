@@ -61,7 +61,7 @@ void vTask_xtract(void *pvParameters){
 	intro(); //display help on start up
 	char *cmd_buf = (char*) malloc(sizeof(char) * BUFFER_SIZE); //command buffer
 
-	/* As per most FreeRTOSD tasks, this task is implemented in an infinite loop. */
+	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
 	while(1){
 		transmit(uart, ">> ");
 		cmd_buf = receive_command(uart); //puts input into buffrx
@@ -70,7 +70,7 @@ void vTask_xtract(void *pvParameters){
 } //vTaskUART_CLI END
 
 void handle_command(char* command){
-	char* output = (char*) malloc(BUFFER_SIZE * sizeof(char));
+	char output[BUFFER_SIZE];
 
 	if(strcmp(command, "help") == 0){
 		help();
