@@ -56,10 +56,10 @@
 // NOTE: If you wish to use another UART port, please create another function to initialize that port.
 //
 // Parameters:
-//  VOID
+//  UART_HandleTypeDef Pointer (needed by communication functions)
 //
 // Returns:
-//  UART_HandleTypeDef Pointer (needed by communication functions)
+//  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MX_HAL_UART2_Init(UART_HandleTypeDef* uart);
 
