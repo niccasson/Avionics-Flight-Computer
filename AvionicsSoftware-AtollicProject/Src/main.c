@@ -18,13 +18,12 @@
 #include "cmsis_os.h"
 
 osThreadId defaultTaskHandle;
-
+UART_HandleTypeDef huart2_ptr; //global var to be passed to vTask_xtract
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
-
 
 int main(void)
 {
@@ -35,15 +34,24 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-
-
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  MX_GPIO_Init(); //GPIO MUST be firstly initialized
+  MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
+    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
+    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+				 (void*) &huart2_ptr,	/* pointer to the huart object */
+				 1,			 /* This task will run at priorirt 1. */
+				 NULL		 /* This example does not use the task handle. */
+      	  	  ) == -1){
+	  Error_Handler();
+  }
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
@@ -108,14 +116,13 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  	  //set up PA5 as output.
-  	 GPIO_InitTypeDef GPIOInit;
-     GPIOInit.Pin       = GPIO_PIN_5;
-     GPIOInit.Mode      = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitTypeDef GPIO_InitStruct;
 
-     HAL_GPIO_Init(GPIOA,&GPIOInit);
+  //set up PA5 as output.
+  GPIO_InitStruct.Pin       = GPIO_PIN_5;
+  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
 }
-
 
 void StartDefaultTask(void const * argument)
 {
