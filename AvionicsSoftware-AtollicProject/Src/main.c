@@ -43,15 +43,26 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
-    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
-    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 (void*) &huart2_ptr,	/* pointer to the huart object */
-				 1,			 /* This task will run at priorirt 1. */
-				 NULL		 /* This example does not use the task handle. */
-      	  	  ) == -1){
-	  Error_Handler();
-  }
+//  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
+//    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
+//    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+//				 (void*) &huart2_ptr,	/* pointer to the huart object */
+//				 1,			 /* This task will run at priority 1. */
+//				 NULL		 /* This example does not use the task handle. */
+//      	  	  ) == -1){
+//	  Error_Handler();
+//  }
+
+
+  if(xTaskCreate(	vTask_pressure_sensor, 	 /* Pointer to the function that implements the task */
+      		  	"pressure sensor", /* Text name for the task. This is only to facilitate debugging */
+      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+  				 (void*) &huart2_ptr,	/* function arguments */
+  				 1,			 /* This task will run at priority 1. */
+  				 NULL		 /* This example does not use the task handle. */
+        	  	  ) == -1){
+  	  Error_Handler();
+    }
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
