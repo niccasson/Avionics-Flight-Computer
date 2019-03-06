@@ -26,6 +26,7 @@
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 static UART_HandleTypeDef* uart;
+SPI_HandleTypeDef* hspi;
 struct bmp280_dev bmp;
 static char buf[128];
 
@@ -57,6 +58,12 @@ static void print_rslt(const char api_name[], int8_t rslt);
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void vTask_pressure_sensor(void *pvParameters){
     uart = (UART_HandleTypeDef*) pvParameters;
+    transmit_line(uart, "BMP280: SPI Initialization");
+    hspi = malloc(sizeof(SPI_HandleTypeDef));
+    if(!hspi){
+    	transmit_line(uart, "BMP280");
+    }
+    spi1_init(hspi);
     init_bmp280();
 }
 
@@ -165,24 +172,24 @@ static void print_rslt(const char api_name[], int8_t rslt)
         printf("%s\t", api_name);
         if (rslt == BMP280_E_NULL_PTR)
         {
-            sprintf(buf, "Error [%d] : Null pointer error\r\n", rslt);
+            sprintf(buf, "%s Error [%d] : Null pointer error\r\n", api_name, rslt);
         }
         else if (rslt == BMP280_E_COMM_FAIL)
         {
-            sprintf(buf, "Error [%d] : Bus communication failed\r\n", rslt);
+            sprintf(buf, "%s Error [%d] : Bus communication failed\r\n", api_name, rslt);
         }
         else if (rslt == BMP280_E_IMPLAUS_TEMP)
         {
-            sprintf(buf, "Error [%d] : Invalid Temperature\r\n", rslt);
+            sprintf(buf, "%s Error [%d] : Invalid Temperature\r\n", api_name, rslt);
         }
         else if (rslt == BMP280_E_DEV_NOT_FOUND)
         {
-            sprintf(buf, "Error [%d] : Device not found\r\n", rslt);
+            sprintf(buf, "%s Error [%d] : Device not found\r\n", api_name, rslt);
         }
         else
         {
             /* For more error codes refer "*_defs.h" */
-            sprintf(buf, "Error [%d] : Unknown error code\r\n", rslt);
+            sprintf(buf, "%s Error [%d] : Unknown error code\r\n", api_name, rslt);
         }
     }
 
