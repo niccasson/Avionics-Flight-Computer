@@ -63,7 +63,7 @@ int main(void)
         	  	  ) == -1){
   	  Error_Handler();
     }
- 
+
 
   /* Start scheduler -- comment to not use FreeRTOS */
   osKernelStart();
