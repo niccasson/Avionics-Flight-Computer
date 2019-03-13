@@ -61,6 +61,7 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 #include <stm32f4xx_hal_uart_io.h>
 #include "xtract.h"
+#include "buttonpress.h"
 
 
 /* Private includes ----------------------------------------------------------*/
