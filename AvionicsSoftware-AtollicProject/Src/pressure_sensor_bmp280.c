@@ -61,7 +61,7 @@ void vTask_pressure_sensor(void *pvParameters){
     transmit_line(uart, "BMP280: SPI Initialization");
     hspi = malloc(sizeof(SPI_HandleTypeDef));
     if(!hspi){
-    	transmit_line(uart, "BMP280");
+    	transmit_line(uart, "malloc failed: sizeof(UART_HandleTypeDef)");
     }
     spi1_init(hspi);
     init_bmp280();
@@ -132,9 +132,12 @@ static void delay_ms(uint32_t period_ms)
  */
 static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint16_t length)
 {
+	int8_t rslt = 0; //assume success
 
-    /* Implement the SPI write routine according to the target machine. */
-    return -1;
+	spi_transmit(*hspi, &reg_addr, reg_data, length, TIMEOUT);
+	/* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
+
+    return rslt;
 }
 
 /*!
@@ -152,9 +155,12 @@ static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uin
  */
 static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint16_t length)
 {
+	int8_t rslt = 0; //assume success
 
-    /* Implement the SPI read routine according to the target machine. */
-    return -1;
+	//1 + length because spi_read needs to know that 1 byte will be used for selecting register address, and length refers to the message size
+    spi_read(*hspi, &reg_addr, reg_data, 1+length, TIMEOUT);
+    /* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
+    return rslt;
 }
 
 /*!
