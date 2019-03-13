@@ -52,12 +52,14 @@ void spi3_init(SPI_HandleTypeDef *hspi);//NOT FINISHED
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
 
-void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
+void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
 // Description:
 //  This function transfers one or more bytes over the SPI bus.
+//  It firstly sends the register address (hard coded to be a 1 byte address).
 //
 // Parameters:
 //     hspi            A reference used to refer to the SPI interface.
+//     addr_buffer     A pointer to the address to write to.
 //     tx_buffer       A pointer to the bytes to send.
 //     size            The number of bytes being sent.
 //     timeout         The timeout value in milliseconds.
