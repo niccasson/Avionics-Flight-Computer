@@ -25,7 +25,7 @@
 void spi1_init(SPI_HandleTypeDef * hspi);
 void spi2_init(SPI_HandleTypeDef * hspi);
 void spi3_init(SPI_HandleTypeDef * hspi);
-void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
+void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 
 
@@ -91,7 +91,7 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 void spi2_init(SPI_HandleTypeDef *hspi){}
 void spi3_init(SPI_HandleTypeDef *hspi){}
 
-void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *tx_buffer,uint16_t size, uint32_t timeout){
+void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout){
 
 	HAL_StatusTypeDef stat;
 	GPIO_TypeDef * port = SPI1_CS_PORT;
@@ -109,14 +109,21 @@ void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *tx_buffer,uint16_t size, uint3
     	  port = SPI3_CS_PORT;
     	  pin = SPI3_CS_PIN;
     }
-	//Write the CS low
+	//Write the CS low (lock)
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_RESET);
 
+	/* Select the slave register (**1 byte address**) first via a transmit */
+	stat = HAL_SPI_Transmit(&hspi,reg_addr,1,timeout);
+    while(stat != HAL_OK){}
+
+    /* Send the tx_buffer to slave */
 	stat = HAL_SPI_Transmit(&hspi,tx_buffer,size,timeout);
 	while(stat != HAL_OK){}
-	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 
+	//Write the CS hi (release)
+	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 }
+
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout){
 
 	GPIO_TypeDef * port = SPI1_CS_PORT;
