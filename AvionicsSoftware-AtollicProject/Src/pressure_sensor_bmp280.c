@@ -46,7 +46,7 @@ static char buf[128];
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int init_bmp280( void );
-
+static int bmp280_config( void );
 
 static void delay_ms(uint32_t period_ms);
 static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint16_t length);
@@ -54,14 +54,40 @@ static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint
 static void print_rslt(const char api_name[], int8_t rslt);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// FUNCTIONS
+// PUBLIC FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void vTask_pressure_sensor(void *pvParameters){
-	delay_ms(5000); //to manually start the logic analyzer
+uint32_t bmp280_get_32press(struct bmp280_dev bmp){
+	int8_t rslt;
+	struct bmp280_uncomp_data ucomp_data;
+	uint32_t pres32, pres64;
+	double pres;
 
+    /* Reading the raw data from sensor */
+    rslt = bmp280_get_uncomp_data(&ucomp_data, &bmp);
+
+    /* Getting the compensated pressure using 32 bit precision */
+    rslt = bmp280_get_comp_pres_32bit(&pres32, ucomp_data.uncomp_press, &bmp);
+
+    /* Getting the compensated pressure using 64 bit precision */
+    rslt = bmp280_get_comp_pres_32bit(&pres64, ucomp_data.uncomp_press, &bmp);
+
+    /* Getting the compensated pressure as floating point value */
+    //rslt = bmp280_get_comp_pres_double(&pres, ucomp_data.uncomp_press, &bmp);
+
+    sprintf(buf, "UP: [%ld Pa]\tP32: [%ld Pa]\tP64: [%ld Pa]", ucomp_data.uncomp_press, pres32, pres64);
+    transmit_line(uart, buf);
+
+    return pres32;
+}
+
+void vTask_pressure_sensor(void *pvParameters){
+	//delay_ms(5000); //to manually start the logic analyzer
+	int rslt;
+
+	/* Initialization */
     uart = (UART_HandleTypeDef*) pvParameters;
     transmit_line(uart, "\r\n---------------------------------------------");
-    transmit_line(uart, "Pressure / Temperature Sensor Initialization:");
+    transmit_line(uart, "Pressure / Temperature Sensor Init & Config:");
     transmit_line(uart, "---------------------------------------------");
 
     hspi = malloc(sizeof(SPI_HandleTypeDef));
@@ -74,15 +100,29 @@ void vTask_pressure_sensor(void *pvParameters){
     transmit(uart, "\tComplete.\r\n"); //SPI1_INIT returns VOID -- there is no real check here
 
     transmit(uart, "\tBMP280 Initialization...");
-    int rslt = init_bmp280();
+    rslt = init_bmp280();
     if(rslt == 0)
     {
     	transmit(uart, "\tComplete.\r\n");
     }
+
+    /* Configuration */
+    transmit(uart, "\tBMP280 Configuration...");
+    rslt = bmp280_config();
+    if(rslt == 0){
+    	transmit(uart, "\tComplete.\r\n");
+    }
+
+    while(1){
+    	bmp280_get_32press(bmp);
+    	bmp.delay_ms(1000);
+    }
+
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+// PRIVATE FUNCTIONS
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
 //  Initialize BMP280 sensor and be ready to read via SPI 4w.
@@ -114,6 +154,33 @@ static int init_bmp280( void ){
 	}
 
 	return rslt;
+}
+
+static int bmp280_config(){
+	struct bmp280_config conf;
+	int rslt;
+
+	/* Configuration */
+	/* Always read the current settings before writing, especially when
+	 * all the configuration is not modified */
+	rslt = bmp280_get_config(&conf, &bmp);
+	print_rslt("bmp280_get_config status", rslt);
+
+    /* configuring the temperature oversampling, filter coefficient and output data rate */
+    /* Overwrite the desired settings */
+    conf.filter = BMP280_FILTER_COEFF_16;
+
+    /* Pressure oversampling set at 4x */
+    conf.os_pres = BMP280_OS_4X;
+
+    /* Setting the output data rate as 1HZ(1000ms) */
+	conf.odr = BMP280_ODR_1000_MS;
+	rslt = bmp280_set_config(&conf, &bmp);
+	print_rslt("bmp280_set_config status", rslt);
+
+	/* Always set the power mode after setting the configuration */
+	rslt = bmp280_set_power_mode(BMP280_NORMAL_MODE, &bmp);
+    print_rslt("bmp280_set_power_mode status", rslt);
 }
 
 /*!
