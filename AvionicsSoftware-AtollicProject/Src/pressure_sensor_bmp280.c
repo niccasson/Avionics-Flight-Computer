@@ -57,14 +57,28 @@ static void print_rslt(const char api_name[], int8_t rslt);
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void vTask_pressure_sensor(void *pvParameters){
+	delay_ms(5000); //to manually start the logic analyzer
+
     uart = (UART_HandleTypeDef*) pvParameters;
-    transmit_line(uart, "BMP280: SPI Initialization");
+    transmit_line(uart, "\r\n---------------------------------------------");
+    transmit_line(uart, "Pressure / Temperature Sensor Initialization:");
+    transmit_line(uart, "---------------------------------------------");
+
     hspi = malloc(sizeof(SPI_HandleTypeDef));
     if(!hspi){
-    	transmit_line(uart, "malloc failed: sizeof(UART_HandleTypeDef)");
+    	transmit_line(uart, "\tmalloc failed: sizeof(UART_HandleTypeDef)");
     }
+
+	transmit(uart, "\tSPI Initialization...");
     spi1_init(hspi);
-    init_bmp280();
+    transmit(uart, "\tComplete.\r\n"); //SPI1_INIT returns VOID -- there is no real check here
+
+    transmit(uart, "\tBMP280 Initialization...");
+    int rslt = init_bmp280();
+    if(rslt == 0)
+    {
+    	transmit(uart, "\tComplete.\r\n");
+    }
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -90,18 +104,16 @@ static int init_bmp280( void ){
 	bmp.write = spi_reg_write;
 	bmp.dev_id = 0;
 
-	rslt = bmp280_init(&bmp);
-	print_rslt(" bmp280_init status", rslt);
-	rslt = bmp280_selftest(&bmp);
-	print_rslt(" bmp280_perform_self_test status", rslt);
-	if(rslt == BMP280_OK){
-		transmit_line(uart, "Self test success");
-	}
-	else{
-		transmit_line(uart, "Self test failed");
+	rslt = bmp280_init(&bmp); //bosch API initialization method
+	print_rslt("bmp280_init status", rslt);
+
+	if(rslt != 0) //stop if initialization failed
+	{
+		rslt = bmp280_selftest(&bmp);
+		print_rslt("bmp280_perform_self_test status", rslt);
 	}
 
-	return 0;
+	return rslt;
 }
 
 /*!
@@ -173,31 +185,75 @@ static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint
  */
 static void print_rslt(const char api_name[], int8_t rslt)
 {
+	/*! @name Error codes
+	#define BMP280_E_NULL_PTR                    INT8_C(-1)
+	#define BMP280_E_DEV_NOT_FOUND               INT8_C(-2)
+	#define BMP280_E_INVALID_LEN                 INT8_C(-3)
+	#define BMP280_E_COMM_FAIL                   INT8_C(-4)
+	#define BMP280_E_INVALID_MODE                INT8_C(-5)
+	#define BMP280_E_BOND_WIRE                   INT8_C(-6)
+	#define BMP280_E_IMPLAUS_TEMP                INT8_C(-7)
+	#define BMP280_E_IMPLAUS_PRESS               INT8_C(-8)
+	#define BMP280_E_CAL_PARAM_RANGE             INT8_C(-9)
+	#define BMP280_E_UNCOMP_TEMP_RANGE           INT8_C(-10)
+	#define BMP280_E_UNCOMP_PRES_RANGE           INT8_C(-11)
+	#define BMP280_E_UNCOMP_TEMP_AND_PRESS_RANGE INT8_C(-12)
+	#define BMP280_E_UNCOMP_DATA_CALC            INT8_C(-13)
+	#define BMP280_E_32BIT_COMP_TEMP             INT8_C(-14)
+	#define BMP280_E_32BIT_COMP_PRESS            INT8_C(-15)
+	#define BMP280_E_64BIT_COMP_PRESS            INT8_C(-16)
+	#define BMP280_E_DOUBLE_COMP_TEMP            INT8_C(-17)
+	#define BMP280_E_DOUBLE_COMP_PRESS           INT8_C(-18) */
     if (rslt != BMP280_OK)
     {
-        printf("%s\t", api_name);
+    	char error_msg[64];
         if (rslt == BMP280_E_NULL_PTR)
         {
-            sprintf(buf, "%s Error [%d] : Null pointer error\r\n", api_name, rslt);
-        }
-        else if (rslt == BMP280_E_COMM_FAIL)
-        {
-            sprintf(buf, "%s Error [%d] : Bus communication failed\r\n", api_name, rslt);
-        }
-        else if (rslt == BMP280_E_IMPLAUS_TEMP)
-        {
-            sprintf(buf, "%s Error [%d] : Invalid Temperature\r\n", api_name, rslt);
+        	sprintf(error_msg, "Null pointer error");
         }
         else if (rslt == BMP280_E_DEV_NOT_FOUND)
         {
-            sprintf(buf, "%s Error [%d] : Device not found\r\n", api_name, rslt);
+        	sprintf(error_msg, "Device not found");
+        }
+        else if (rslt == BMP280_E_INVALID_LEN)
+		{
+        	sprintf(error_msg, "BMP280_E_INVALID_LEN");
+		}
+        else if (rslt == BMP280_E_COMM_FAIL)
+        {
+        	sprintf(error_msg, "Bus communication failed");
+        }
+        else if (rslt == BMP280_E_INVALID_MODE)
+		{
+        	sprintf(error_msg, "Invalid Mode.");
+		}
+        else if (rslt == BMP280_E_BOND_WIRE)
+		{
+        	sprintf(error_msg, "Bond wire.");
+		}
+        else if (rslt == BMP280_E_IMPLAUS_PRESS)
+		{
+        	sprintf(error_msg, "Invalid Pressure");
+		}
+        else if (rslt == BMP280_E_IMPLAUS_TEMP)
+		{
+        	sprintf(error_msg, "Invalid Temperature");
+		}
+        else if (rslt == BMP280_E_INVALID_MODE)
+		{
+        	sprintf(error_msg, "Invalid Mode");
+		}
+        else if (rslt == BMP280_E_CAL_PARAM_RANGE)
+        {
+        	sprintf(error_msg, "Calibration Parameter range invalid");
         }
         else
         {
             /* For more error codes refer "*_defs.h" */
-            sprintf(buf, "%s Error [%d] : Unknown error code\r\n", api_name, rslt);
+        	sprintf(error_msg, "Unknown error code");
         }
+        sprintf(buf, "\r\nERROR [%d] %s : %s\r\n", rslt, api_name, error_msg);
     }
 
-    transmit_line(uart, buf);
+    transmit(uart, buf);
 }
