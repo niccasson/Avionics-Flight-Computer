@@ -22,7 +22,6 @@ UART_HandleTypeDef huart2_ptr; //global var to be passed to vTask_xtract
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
 
 int main(void)
@@ -35,7 +34,7 @@ int main(void)
   SystemClock_Config();
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init(); //GPIO MUST be firstly initialized
+  Timer_GPIO_Init(); //GPIO MUST be firstly initialized
   MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
 
   /* Create the thread(s) */
@@ -43,25 +42,27 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
-    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
-    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 (void*) &huart2_ptr,	/* pointer to the huart object */
-				 1,			 /* This task will run at priorirt 1. */
-				 NULL		 /* This example does not use the task handle. */
-      	  	  ) == -1){
-	  Error_Handler();
-  }
 
-  if(xTaskCreate(	vTask_buttonpress, 	 /* Pointer to the function that implements the task */
-      		  	"button press", /* Text name for the task. This is only to facilitate debugging */
-      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-  				 (void*) &huart2_ptr,	/* pointer to the huart object */
-  				 2,			 /* This task will run at priorirt 2. */
-  				 NULL		 /* This example does not use the task handle. */
-        	  	  ) == -1){
-  	  Error_Handler();
-    }
+  if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
+        		  	"timer", /* Text name for the task. This is only to facilitate debugging */
+        		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+    				 (void*) &huart2_ptr,	/* pointer to the huart object */
+    				 2,			 /* This task will run at priorirt 2. */
+    				 NULL		 /* This example does not use the task handle. */
+          	  	  ) == -1){
+    	  Error_Handler();
+      }
+
+  //if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
+  //  		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
+  //  		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+//				 (void*) &huart2_ptr,	/* pointer to the huart object */
+//				 1,			 /* This task will run at priorirt 1. */
+//				 NULL		 /* This example does not use the task handle. */
+ //     	  	  ) == -1){
+//	  Error_Handler();
+//  }
+
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
@@ -120,19 +121,28 @@ void SystemClock_Config(void)
 }
 
 
-static void MX_GPIO_Init(void)
-{
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  //set up PA5 as output.
-  GPIO_InitStruct.Pin       = GPIO_PIN_5;
-  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
-  HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
-}
+//static void MX_GPIO_Init(void)
+//{
+//
+//  /* GPIO Ports Clock Enable */
+//  __HAL_RCC_GPIOA_CLK_ENABLE();
+//  __HAL_RCC_GPIOC_CLK_ENABLE();
+//
+//  GPIO_InitTypeDef GPIO_InitStruct;
+//
+//  //set up PA5 as output.
+//  GPIO_InitStruct.Pin       = GPIO_PIN_5;
+//  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+//  HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
+//
+//
+//  //set up the push button as input
+//  GPIO_InitStruct.Pin		= GPIO_PIN_13;
+//  GPIO_InitStruct.Mode 		= GPIO_MODE_INPUT;
+//  GPIO_InitStruct.Pull		= GPIO_PULLDOWN;
+//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+//}
 
 void StartDefaultTask(void const * argument)
 {
@@ -141,7 +151,7 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
 
-	HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
+	//HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
     vTaskDelay(pdMS_TO_TICKS(1000)); //Delay for 1 second.
   }
   /* USER CODE END 5 */ 

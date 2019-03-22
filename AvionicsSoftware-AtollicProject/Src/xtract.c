@@ -20,6 +20,8 @@
 #include <string.h>
 
 #include "xtract.h"
+#include "buttonpress.h"
+#include "cmsis_os.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -77,6 +79,9 @@ void handle_command(char* command){
 	}
 	else if(strcmp(command, "read") == 0){
 		read();
+	}
+	else if(strcmp(command, "start") == 0){
+		start();
 	}
 	else{
 		sprintf(output, "Command [%s] not recognized.", command);

@@ -1,5 +1,5 @@
-#ifndef BP_H
-#define BP_H
+#ifndef TIMER_H
+#define TIMER_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
@@ -58,7 +58,7 @@
 // Returns:
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void Timerbp_GPIO_Init(void);
-void vTask_timerbp(void *param);
+void Timer_GPIO_Init(void);
+void vTask_timer(void *param);
 
-#endif // BP_H
+#endif // TIMER_H
