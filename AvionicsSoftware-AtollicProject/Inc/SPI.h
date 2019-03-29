@@ -13,23 +13,27 @@
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 #ifndef SPI_H
 #define SPI_H
 
-#define SPI1_CS_PIN		GPIO_PIN_9
-#define SPI1_CS_PORT	GPIOA
-
-#define SPI2_CS_PIN		0	//PLACEHOLDER
-#define SPI2_CS_PORT	0	//PLACEHOLDER
-
-#define SPI3_CS_PIN		0	//PLACEHOLDER
-#define SPI3_CS_PORT	0	//PLACEHOLDER
-
-
-
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_spi.h"
+#include "hardwareDefs.h"
+
+
+#define SPI1_CS_PIN		FLASH_SPI_CS_PIN
+#define SPI1_CS_PORT	FLASH_SPI_CS_PORT
+
+#define SPI2_CS_PIN		PRES_SPI_CS_PIN
+#define SPI2_CS_PORT	PRES_SPI_CS_PORT
+
+//Need to look into how to switch between acc and gyro cs pins.
+#define SPI3_CS_PIN		IMU_ACC_INT_PIN
+#define SPI3_CS_PORT	IMU_ACC_INT_PORT
+
+
+
+
 
 void spi1_init(SPI_HandleTypeDef *hspi);
 // Description:
@@ -38,14 +42,14 @@ void spi1_init(SPI_HandleTypeDef *hspi);
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
 
-void spi2_init(SPI_HandleTypeDef *hspi); //NOT FINISHED
+void spi2_init(SPI_HandleTypeDef *hspi);
 // Description:
 //  This function initializes the SPI2 interface.
 //
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
 
-void spi3_init(SPI_HandleTypeDef *hspi);//NOT FINISHED
+void spi3_init(SPI_HandleTypeDef *hspi);
 // Description:
 //  This function initializes the SPI3 interface.
 //

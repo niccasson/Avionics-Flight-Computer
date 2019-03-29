@@ -25,6 +25,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
 
+
 int main(void)
 {
 

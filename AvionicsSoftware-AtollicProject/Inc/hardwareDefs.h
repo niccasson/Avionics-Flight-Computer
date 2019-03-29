@@ -44,7 +44,7 @@
 #define UART_RX_PIN				GPIO_PIN_11
 #define UART_RX_PORT			GPIOA
 
-//Flash Memory
+//Flash Memory on SPI1
 #define FLASH_SPI_PORT			GPIOA
 
 #define FLASH_SPI_SCK_PIN		GPIO_PIN_5
@@ -61,7 +61,7 @@
 #define FLASH_HOLD_PORT			GPIOC
 
 
-//Pressure Sensor
+//Pressure Sensor on SPI2
 #define PRES_SPI_PORT			GPIOB
 
 #define PRES_SPI_SCK_PIN		GPIO_PIN_13
@@ -75,7 +75,7 @@
 #define PRES_INT_PORT			GPIOC
 
 
-//IMU
+//IMU on SPI3
 #define IMU_SPI_PORT			GPIOC
 
 #define IMU_SPI_SCK_PIN			GPIO_PIN_10
