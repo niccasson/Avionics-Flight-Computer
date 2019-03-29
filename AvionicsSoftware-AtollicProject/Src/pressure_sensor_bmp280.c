@@ -22,13 +22,13 @@
 #include <string.h>
 
 
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 static UART_HandleTypeDef* uart;
-SPI_HandleTypeDef* hspi;
-struct bmp280_dev bmp;
 static char buf[128];
+static bmp280_sensor* static_bmp280_sensor;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -45,144 +45,151 @@ static char buf[128];
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-static int init_bmp280( void );
-static int bmp280_config( void );
+/*
+ * Brief: Configures the  static_bmp280_sensor according to parameterized filter, os_pres, and odr
+ * Param:
+ *   - filter: filter coefficient
+ *   - os_pres: oversampling rate for pressure
+ *   - odr: output data rate
+ */
+static uint8_t bmp280_config(uint8_t filter, uint8_t os_pres, uint8_t odr);
 
 static void delay_ms(uint32_t period_ms);
+
 static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint16_t length);
+
 static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint16_t length);
+
 static void print_rslt(const char api_name[], int8_t rslt);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // PUBLIC FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint32_t bmp280_get_32press(struct bmp280_dev bmp){
+int8_t init_bmp280_sensor(bmp280_sensor* bmp280_sensor_ptr){
+	int8_t rslt;
+	struct bmp280_dev* bmp280_ptr;
+	SPI_HandleTypeDef* hspi_ptr;
+
+	 //Initialize SPI Handler
+	hspi_ptr = malloc(sizeof(SPI_HandleTypeDef));
+	while(!hspi_ptr){} //Could not malloc a hspi
+	spi1_init(hspi_ptr);
+
+	//Initialize BMP280 Handler
+	bmp280_ptr = malloc(sizeof(struct bmp280_dev));
+
+	/* Set bmp280_sensor_ptr members to newly initialized handlers */
+	bmp280_sensor_ptr->bmp_ptr = bmp280_ptr;
+	bmp280_sensor_ptr->hspi_ptr = hspi_ptr;
+
+	// Save static reference to bmp280_sensor_ptr for use in spi_reg_read/write wrapper functions
+	// The spi_reg_read/write functions have function signatures defined by the BOSCH API which they conform to.
+	// Unforuntately, a reference to the SPI connection is not in that signature, so I keep a static reference to it for use in said wrapper functions.
+	static_bmp280_sensor = bmp280_sensor_ptr;
+
+	/* Map the delay function pointer with the function responsible for implementing the delay */
+	bmp280_ptr->delay_ms = delay_ms;
+
+	/* Select the interface mode as SPI */
+	bmp280_ptr->intf = BMP280_SPI_INTF;
+	bmp280_ptr->read = spi_reg_read;
+	bmp280_ptr->write = spi_reg_write;
+	bmp280_ptr->dev_id = 0;
+
+	rslt = bmp280_init(bmp280_ptr); //bosch API initialization method
+
+	while(rslt != BMP280_OK){} //stop if initialization failed
+
+	rslt = bmp280_selftest(bmp280_ptr);
+	while(rslt != BMP280_OK){} //spin wait if self test failed
+	return rslt;
+}
+
+uint32_t bmp280_get_press(){
 	int8_t rslt;
 	struct bmp280_uncomp_data ucomp_data;
-	uint32_t pres32, pres64;
-	double pres;
+	uint32_t pres32;
 
     /* Reading the raw data from sensor */
-    rslt = bmp280_get_uncomp_data(&ucomp_data, &bmp);
+    rslt = bmp280_get_uncomp_data(&ucomp_data, static_bmp280_sensor->bmp_ptr);
 
     /* Getting the compensated pressure using 32 bit precision */
-    rslt = bmp280_get_comp_pres_32bit(&pres32, ucomp_data.uncomp_press, &bmp);
-
-    /* Getting the compensated pressure using 64 bit precision */
-    rslt = bmp280_get_comp_pres_32bit(&pres64, ucomp_data.uncomp_press, &bmp);
-
-    /* Getting the compensated pressure as floating point value */
-    //rslt = bmp280_get_comp_pres_double(&pres, ucomp_data.uncomp_press, &bmp);
-
-    sprintf(buf, "UP: [%ld Pa]\tP32: [%ld Pa]\tP64: [%ld Pa]", ucomp_data.uncomp_press, pres32, pres64);
-    transmit_line(uart, buf);
+    rslt = bmp280_get_comp_pres_32bit(&pres32, ucomp_data.uncomp_press, static_bmp280_sensor->bmp_ptr);
 
     return pres32;
 }
 
+int32_t bmp280_get_temp(){
+	int8_t rslt;
+	struct bmp280_uncomp_data ucomp_data;
+	int32_t temp32;
+
+	/* Reading the raw data from sensor */
+	rslt = bmp280_get_uncomp_data(&ucomp_data, static_bmp280_sensor->bmp_ptr);
+
+	/* Getting the compensated temperature using 32 bit precision */
+	//result is integer (i.e. 1234 is 12.34 C)
+	rslt = bmp280_get_comp_temp_32bit(&temp32, ucomp_data.uncomp_temp, static_bmp280_sensor->bmp_ptr);
+
+	return temp32;
+}
+
+static uint8_t bmp280_config(uint8_t filter, uint8_t os_pres, uint8_t odr){
+	struct bmp280_config conf;
+	uint8_t rslt;
+
+	/* Configuration */
+	/* Always read the current settings before writing, especially when
+	 * all the configuration is not modified */
+	rslt = bmp280_get_config(&conf, static_bmp280_sensor->bmp_ptr);
+	//print_rslt("bmp280_get_config status", rslt);
+
+    /* configuring the temperature oversampling, filter coefficient and output data rate */
+    /* Overwrite the desired settings */
+    conf.filter = filter;
+
+    /* Pressure oversampling */
+    conf.os_pres = os_pres;
+
+    /* Setting the output data rate */
+	conf.odr = odr;
+
+	/* lock in the changes */
+	rslt = bmp280_set_config(&conf, static_bmp280_sensor->bmp_ptr);
+	//print_rslt("bmp280_set_config status", rslt);
+
+	/* Always set the power mode after setting the configuration */
+	rslt = bmp280_set_power_mode(BMP280_NORMAL_MODE, static_bmp280_sensor->bmp_ptr);
+    //print_rslt("bmp280_set_power_mode status", rslt);
+	return rslt;
+}
+
 void vTask_pressure_sensor(void *pvParameters){
-	//delay_ms(5000); //to manually start the logic analyzer
 	int rslt;
+    int32_t temp32;
+    uint32_t pres32;
 
-	/* Initialization */
-    uart = (UART_HandleTypeDef*) pvParameters;
-    transmit_line(uart, "\r\n---------------------------------------------");
-    transmit_line(uart, "Pressure / Temperature Sensor Init & Config:");
-    transmit_line(uart, "---------------------------------------------");
+    uart = (UART_HandleTypeDef*) pvParameters; //Get uart for printing to console
 
-    hspi = malloc(sizeof(SPI_HandleTypeDef));
-    if(!hspi){
-    	transmit_line(uart, "\tmalloc failed: sizeof(UART_HandleTypeDef)");
-    }
-
-	transmit(uart, "\tSPI Initialization...");
-    spi1_init(hspi);
-    transmit(uart, "\tComplete.\r\n"); //SPI1_INIT returns VOID -- there is no real check here
-
-    transmit(uart, "\tBMP280 Initialization...");
-    rslt = init_bmp280();
-    if(rslt == 0)
-    {
-    	transmit(uart, "\tComplete.\r\n");
-    }
+	bmp280_sensor* bmp280_sensor_ptr = malloc(sizeof(bmp280_sensor));
+	rslt = init_bmp280_sensor(bmp280_sensor_ptr);
 
     /* Configuration */
-    transmit(uart, "\tBMP280 Configuration...");
-    rslt = bmp280_config();
-    if(rslt == 0){
-    	transmit(uart, "\tComplete.\r\n");
-    }
+	rslt = bmp280_config(BMP280_FILTER_COEFF_16, BMP280_OS_4X, BMP280_ODR_1000_MS);
+
 
     while(1){
-    	bmp280_get_32press(bmp);
-    	bmp.delay_ms(1000);
+    	pres32 = bmp280_get_press(bmp280_sensor_ptr);
+    	temp32 = bmp280_get_temp(bmp280_sensor_ptr);
+    	sprintf(buf, "Pressure: %ld [Pa]\tTemperature: %ld [0.01 C]", pres32, temp32);
+    	transmit_line(uart, buf);
+    	bmp280_sensor_ptr->bmp_ptr->delay_ms(1000);
     }
-
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // PRIVATE FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Initialize BMP280 sensor and be ready to read via SPI 4w.
-//  Also performs unit self test.
-//
-// Returns:
-//  0 if no errors.
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-static int init_bmp280( void ){
-	//Based off of https://github.com/BoschSensortec/BMP280_driver/blob/master/examples/basic.c
-	int8_t rslt;
-
-	/* Map the delay function pointer with the function responsible for implementing the delay */
-	bmp.delay_ms = delay_ms;
-
-	/* Select the interface mode as SPI */
-	bmp.intf = BMP280_SPI_INTF;
-	bmp.read = spi_reg_read;
-	bmp.write = spi_reg_write;
-	bmp.dev_id = 0;
-
-	rslt = bmp280_init(&bmp); //bosch API initialization method
-	print_rslt("bmp280_init status", rslt);
-
-	if(rslt != 0) //stop if initialization failed
-	{
-		rslt = bmp280_selftest(&bmp);
-		print_rslt("bmp280_perform_self_test status", rslt);
-	}
-
-	return rslt;
-}
-
-static int bmp280_config(){
-	struct bmp280_config conf;
-	int rslt;
-
-	/* Configuration */
-	/* Always read the current settings before writing, especially when
-	 * all the configuration is not modified */
-	rslt = bmp280_get_config(&conf, &bmp);
-	print_rslt("bmp280_get_config status", rslt);
-
-    /* configuring the temperature oversampling, filter coefficient and output data rate */
-    /* Overwrite the desired settings */
-    conf.filter = BMP280_FILTER_COEFF_16;
-
-    /* Pressure oversampling set at 4x */
-    conf.os_pres = BMP280_OS_4X;
-
-    /* Setting the output data rate as 1HZ(1000ms) */
-	conf.odr = BMP280_ODR_1000_MS;
-	rslt = bmp280_set_config(&conf, &bmp);
-	print_rslt("bmp280_set_config status", rslt);
-
-	/* Always set the power mode after setting the configuration */
-	rslt = bmp280_set_power_mode(BMP280_NORMAL_MODE, &bmp);
-    print_rslt("bmp280_set_power_mode status", rslt);
-}
-
 /*!
  *  @brief Function that creates a mandatory delay required in some of the APIs such as "bmg250_soft_reset",
  *      "bmg250_set_foc", "bmg250_perform_self_test"  and so on.
@@ -213,7 +220,7 @@ static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uin
 {
 	int8_t rslt = 0; //assume success
 
-	spi_transmit(*hspi, &reg_addr, reg_data, length, TIMEOUT);
+	spi_transmit( *(static_bmp280_sensor->hspi_ptr), &reg_addr, reg_data, length, TIMEOUT);
 	/* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
 
     return rslt;
@@ -237,7 +244,7 @@ static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint
 	int8_t rslt = 0; //assume success
 
 	//1 + length because spi_read needs to know that 1 byte will be used for selecting register address, and length refers to the message size
-    spi_read(*hspi, &reg_addr, reg_data, 1+length, TIMEOUT);
+    spi_read( *(static_bmp280_sensor->hspi_ptr), &reg_addr, reg_data, 1+length, TIMEOUT);
     /* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
     return rslt;
 }

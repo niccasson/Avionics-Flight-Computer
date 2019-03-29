@@ -127,22 +127,14 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  //set up PA5 as output.
-  GPIO_InitStruct.Pin       = GPIO_PIN_5;
-  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
-  HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
+  //GPIO_InitTypeDef GPIO_InitStruct;
 }
 
 void StartDefaultTask(void const * argument)
 {
-
-
   for(;;)
   {
-
-	HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
+	//HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
     vTaskDelay(pdMS_TO_TICKS(1000)); //Delay for 1 second.
   }
   /* USER CODE END 5 */ 

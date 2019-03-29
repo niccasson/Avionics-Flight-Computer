@@ -1,32 +1,29 @@
-#ifndef PRESSURE_SENSOR_BMP280_H
-#define PRESSURE_SENSOR_BMP280_H
+#ifndef TEMPLATE_H
+#define TEMPLATE_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// pressure_sensor_bmp280.h
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS > Avionics 2019
+//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Control and usage of BMP280 sensor inside of RTOS task.
+//  Template header file for C / C++ projects. Unused sections can be deleted.
 //
 // History
-// 2019-03-04 Eric Kapilik
+// 2019-01-13 by Tamkin Rahman
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmp280.h"
-#include "stm32f4xx_hal_uart_io.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "SPI.h"
+#include "pressure_sensor_bmp280.h"
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define TIMEOUT 100 // milliseconds
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -35,12 +32,7 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Keep SPI connection and BMP sensor struct togehter
-struct bmp280_sensor_struct{
-	struct bmp280_dev* bmp_ptr;
-	SPI_HandleTypeDef* hspi_ptr;
-};
-typedef struct bmp280_sensor_struct bmp280_sensor;
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -48,52 +40,41 @@ typedef struct bmp280_sensor_struct bmp280_sensor;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+const float reference_pressure = 101325; // [Pa] Static pressure at b=0 level
+const float reference_altitude = 0; // [m] height at bottom of layer b
+
+const float temperature_static = 288.15; // [K] static temperature at b=0 level
+const float lapse_rate_static = -0.0065; // [K/m]  standard temperature laspe rate (K/m) in International Standard Atmosphere
+const float UNIVERSAL_GAS_CONST = 8.3144598; // [J/mol/K] universal gas constant
+const float GRAVITATIONAL_CONST = 9.80665; // [m/s^2] acceleration due to gravity
+const float MOLAR_MASS_AIR = 0.0289644; // [kg/mol] molar mass of Earth's air
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Task for testing the BMP280 sensor.
-//    - initializes sensor
-//    - read data & print to UART screen cycle
+//  Task to test altimeter readings
+//  Display altitude reading continuously to UART output.
+//    - initializes & configures sensor
+//    - read data & calculate altitude
+//    - print to UART screen
 //
 // Returns:
 //  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void vTask_pressure_sensor(void *pvParameters);
+void vTask_altimeter(void *pvParameters);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Initialize BMP280 sensor and be ready to read via SPI 4w.
-//  Also performs unit self test.
-// *Based off of https://github.com/BoschSensortec/BMP280_driver/blob/master/examples/basic.c
+//  Calculate altitude from pressure reading
+//
+// Parameters:
+//  Pressure - [Pa]
 //
 // Returns:
-//  0 if no errors.
+//  float - float value of altitude approximation
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t init_bmp280_sensor(bmp280_sensor* bmp280_sensor_ptr);
+double altitude_approx(float pressure, float temperature);
 
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Captures pressure reading (32 bit precision) from BMP280 sensor.
-// NOTE:
-//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
-//
-// Returns:
-//  uint32_t - 32 bit precision pressure measurement
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint32_t bmp280_get_press();
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Captures temperature reading (32 bit precision) from BMP280 sensor.
-// NOTE:
-//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
-//
-// Returns:
-//  uint32_t - 32 bit precision temperature measurement
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int32_t bmp280_get_temp();
-
-#endif // PRESSURE_SENSOR_BMP280_H
+#endif // TEMPLATE_H
