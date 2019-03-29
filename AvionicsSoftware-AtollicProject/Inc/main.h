@@ -59,8 +59,11 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include <stm32f4xx_hal_uart_io.h>
+#include "stm32f4xx_hal_uart_io.h"
+#include "SPI.h"
+
 #include "xtract.h"
+
 
 
 /* Private includes ----------------------------------------------------------*/
