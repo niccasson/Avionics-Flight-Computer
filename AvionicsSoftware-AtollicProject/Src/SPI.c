@@ -67,6 +67,7 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 		GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	    __HAL_RCC_GPIOA_CLK_ENABLE();
+	    __HAL_RCC_GPIOC_CLK_ENABLE();
 
 	    //Setup the SPI MOSI,MISO and SCK. These pins are fixed.
 	    GPIO_InitStruct.Pin = FLASH_SPI_SCK_PIN|FLASH_SPI_MOSI_PIN|FLASH_SPI_MISO_PIN;
