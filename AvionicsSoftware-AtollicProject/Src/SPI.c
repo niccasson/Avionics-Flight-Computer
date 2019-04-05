@@ -259,3 +259,74 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 
 }
 
+
+void spi_read_long(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout){
+
+
+	GPIO_TypeDef * port = SPI1_CS_PORT;
+	uint16_t pin = 0;
+	HAL_StatusTypeDef stat;
+
+    if(hspi.Instance == SPI1){
+  	  port = SPI1_CS_PORT;
+  	  pin = SPI1_CS_PIN;
+    }
+    else if (hspi.Instance == SPI2){
+    	  port = SPI2_CS_PORT;
+    	  pin  = SPI2_CS_PIN;
+    }
+    else if (hspi.Instance == SPI3){
+    	  port = SPI3_CS_PORT;
+    	  pin = SPI3_CS_PIN;
+    }
+	//Write the CS low
+	HAL_GPIO_WritePin(port,pin,GPIO_PIN_RESET);
+
+	//Could also use HAL_TransmittReceive.
+
+	//Send the address to read from.
+	stat = HAL_SPI_Transmit(&hspi,addr_buffer,addr_buffer_size,timeout);
+	while(stat != HAL_OK){}
+
+	//Read in the specified number of bytes.
+	stat = HAL_SPI_Receive(&hspi,rx_buffer,rx_buffer_size,timeout);
+	while(stat != HAL_OK){}
+	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
+
+}
+
+
+void spi_transmit_long(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, uint8_t *tx_buffer, uint16_t tx_buffer_size, uint32_t timeout){
+
+
+	HAL_StatusTypeDef stat;
+	GPIO_TypeDef * port = SPI1_CS_PORT;
+	uint16_t pin = 0;
+
+    if(hspi.Instance == SPI1){
+  	  port = SPI1_CS_PORT;
+  	  pin = SPI1_CS_PIN;
+    }
+    else if (hspi.Instance == SPI2){
+    	  port = SPI2_CS_PORT;
+    	  pin  = SPI2_CS_PIN;
+    }
+    else if (hspi.Instance == SPI3){
+    	  port = SPI3_CS_PORT;
+    	  pin = SPI3_CS_PIN;
+    }
+	//Write the CS low (lock)
+	HAL_GPIO_WritePin(port,pin,GPIO_PIN_RESET);
+
+	/* Select the slave register (**1 byte address**) first via a transmit */
+	stat = HAL_SPI_Transmit(&hspi,reg_addr,reg_addr_size,timeout);
+    while(stat != HAL_OK){}
+
+    /* Send the tx_buffer to slave */
+	stat = HAL_SPI_Transmit(&hspi,tx_buffer,tx_buffer_size,timeout);
+	while(stat != HAL_OK){}
+
+	//Write the CS hi (release)
+	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
+
+}
