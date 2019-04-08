@@ -64,8 +64,8 @@ void enable_write(FlashStruct_t * flash){
 void 	erase_sector(FlashStruct_t * flash,uint32_t address){
 
 	enable_write(flash);
-	uint8_t command = ERASE_SEC_COMMAND;
-	uint8_t command_address [] = { PP_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+//	uint8_t command = ERASE_SEC_COMMAND;
+	uint8_t command_address [] = { ERASE_SEC_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
 
 	spi_transmit_long(flash->hspi,command_address,4,NULL,0,10);
 
