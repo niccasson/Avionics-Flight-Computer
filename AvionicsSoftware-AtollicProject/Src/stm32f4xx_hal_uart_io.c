@@ -98,7 +98,7 @@ void MX_HAL_UART6_Init(UART_HandleTypeDef* uart){
 	__HAL_RCC_USART6_CLK_ENABLE();
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-
+	__HAL_RCC_GPIOA_CLK_ENABLE();
 	/* Setup UART6 TX Pin */
 	  GPIO_InitStruct.Pin = UART_TX_PIN; //USART_TX_Pin
 	  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
