@@ -34,6 +34,7 @@
 #define		READ_COMMAND			0x03
 #define 	ERASE_SEC_COMMAND		0xD8
 #define		GET_STATUS_REG_COMMAND	0x05
+#define		BULK_ERASE_COMMAND		0x60		//Command to erase the whole device.
 
 //Constants
 #define		MANUFACTURER_ID			0x01
@@ -60,7 +61,7 @@
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-typedef enum {FLASH_ERROR,FLASH_OK} FlashStatus_t;
+typedef enum {FLASH_ERROR,FLASH_OK,FLASH_BUSY} FlashStatus_t;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
@@ -113,11 +114,12 @@ FlashStatus_t		check_flash_id(FlashStruct_t * flash);
 //	The address should be 3 bytes long (0x000000 to 0x7FFFFF).
 //	If the LSB of the address is not all 0, then data written past the page will wrap around!
 //
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  Returns nothing
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void	program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes);
+FlashStatus_t	program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -125,11 +127,12 @@ void	program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,u
 //  This reads from a specified location in the flash memory.
 //	The whole memory array may be read using a single read command.
 //
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  Returns nothing
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes);
+FlashStatus_t 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -137,12 +140,23 @@ void 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uin
 //  This erases a specified sector(64 kb) in the flash memory. Will take up to 2 seconds.
 //	The address can be any address in the desired sector.
 //
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  Returns nothing
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void 	erase_sector(FlashStruct_t * flash,uint32_t address);
+FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address);
 
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  This erases the whole flash memory. Will take up to 128 seconds.
+//
+//	If the device is busy the function exits early and returns FLASH_BUSY.
+//
+// Returns:
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+FlashStatus_t 	erase_device(FlashStruct_t * flash);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
@@ -152,6 +166,6 @@ void 	erase_sector(FlashStruct_t * flash,uint32_t address);
 // Returns:
 //  The status register value (8 bits).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t get_Status_reg(FlashStruct_t * flash);
+uint8_t get_status_reg(FlashStruct_t * flash);
 
 #endif // TEMPLATE_H

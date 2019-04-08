@@ -45,33 +45,86 @@
 // Description:
 //  This function sets the write enable. This is needed before a
 //	write status register, program or erase command.
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  Returns nothing.
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void		enable_write(FlashStruct_t * flash);
+FlashStatus_t		enable_write(FlashStruct_t * flash);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void enable_write(FlashStruct_t * flash){
+FlashStatus_t enable_write(FlashStruct_t * flash){
+
+	FlashStatus_t result = FLASH_ERROR;
+
+	uint8_t status_reg = get_status_reg(flash);
+
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
 		uint8_t command = WE_COMMAND;
 
 		spi_transmit(flash->hspi,&command,NULL,1,10);
 
+		result = FLASH_OK;
+	}
 }
 
-void 	erase_sector(FlashStruct_t * flash,uint32_t address){
+FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address){
 
-	enable_write(flash);
-//	uint8_t command = ERASE_SEC_COMMAND;
-	uint8_t command_address [] = { ERASE_SEC_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+	FlashStatus_t result = FLASH_ERROR;
 
-	spi_transmit_long(flash->hspi,command_address,4,NULL,0,10);
+	uint8_t status_reg = get_status_reg(flash);
 
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		enable_write(flash);
+
+		uint8_t command_address [] = { ERASE_SEC_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+
+		spi_send(flash->hspi,command_address,4,NULL,0,10);
+
+		result = FLASH_OK;
+	}
+	return result;
 }
 
-uint8_t get_Status_reg(FlashStruct_t * flash){
+FlashStatus_t 	erase_device(FlashStruct_t * flash){
+
+	FlashStatus_t result = FLASH_ERROR;
+
+	uint8_t status_reg = get_status_reg(flash);
+
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		enable_write(flash);
+
+		uint8_t command = BULK_ERASE_COMMAND;
+
+		spi_send(flash->hspi,&command,1,NULL,0,10);
+
+		result = FLASH_OK;
+	}
+	return result;
+}
+
+uint8_t get_status_reg(FlashStruct_t * flash){
 
 	uint8_t command = GET_STATUS_REG_COMMAND;
 	uint8_t status_reg;
@@ -82,22 +135,50 @@ uint8_t get_Status_reg(FlashStruct_t * flash){
 	return status_reg;
 }
 
-void program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes){
+FlashStatus_t program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes){
 
-	//Writes must be enabled.
-	enable_write(flash);
-	uint8_t command_address [] = { PP_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+	FlashStatus_t result = FLASH_ERROR;
 
-	spi_transmit_long(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+	uint8_t status_reg = get_status_reg(flash);
 
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		uint8_t status_reg = get_status_reg(flash);
+
+		//Writes must be enabled.
+		enable_write(flash);
+		uint8_t command_address [] = { PP_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+
+		spi_send(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+		result = FLASH_OK;
+	}
+	return result;
 }
+FlashStatus_t 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes){
 
-void 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes){
 
-	uint8_t command_address [] = { READ_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+	FlashStatus_t result = FLASH_ERROR;
 
-	spi_read_long(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+	uint8_t status_reg = get_status_reg(flash);
 
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		uint8_t command_address [] = { READ_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+
+		spi_receive(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+		result = FLASH_OK;
+	}
+	return result;
 }
 
 FlashStatus_t		check_flash_id(FlashStruct_t * flash){
@@ -107,7 +188,7 @@ FlashStatus_t		check_flash_id(FlashStruct_t * flash){
 	uint8_t id[3] = {0,0,0};
 
 	uint8_t bytes_to_send = sizeof(command)+sizeof(id)/sizeof(id[0]);
-	spi_read(flash->hspi,(uint8_t *)&command,id,bytes_to_send,10);
+	spi_receive(flash->hspi,(uint8_t *)&command,1,id,bytes_to_send,10);
 
 	if((id[0] == MANUFACTURER_ID) && (id[1] == DEVICE_ID_MSB) && (id[2] == DEVICE_ID_LSB) ){
 
