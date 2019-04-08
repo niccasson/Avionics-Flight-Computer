@@ -32,6 +32,8 @@
 #define 	WE_COMMAND				0x06		//Write Enable
 #define		PP_COMMAND				0x02		//Page Program Command (write)
 #define		READ_COMMAND			0x03
+#define 	ERASE_SEC_COMMAND		0xD8
+#define		GET_STATUS_REG_COMMAND	0x05
 
 //Constants
 #define		MANUFACTURER_ID			0x01
@@ -41,6 +43,19 @@
 #define 	HIGH_BYTE_MASK_24B		0x00FF0000
 #define		MID_BYTE_MASK_24B		0x0000FF00
 #define 	LOW_BYTE_MASK_24B		0x000000FF
+
+//Status Reg. Bits
+#define 	P_ERR_BIT				0x06		//Programming Error Bit.
+#define		E_ERR_BIT				0x05		//Erase Error Bit.
+#define		WEL_BIT					0x01		//Write Enable Latch Bit.
+#define		WIP_BIT					0x00		//Write In Progress Bit.
+
+//Macros
+#define		WAS_PROGRAMING_ERROR(x)	((x >> P_ERR_BIT) & 0x01)
+#define		WAS_ERASE_ERROR(x)		((x >> E_ERR_BIT) & 0x01)
+#define		IS_WRITE_ENABLE(x)		((x >> WEL_BIT) & 0x01)
+#define		IS_DEVICE_BUSY(x)		((x >> WIP_BIT) & 0x01)
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -116,5 +131,27 @@ void	program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,u
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes);
 
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  This erases a specified sector(64 kb) in the flash memory. Will take up to 2 seconds.
+//	The address can be any address in the desired sector.
+//
+//
+// Returns:
+//  Returns nothing
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void 	erase_sector(FlashStruct_t * flash,uint32_t address);
+
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  This returns the status register of teh flash.
+//
+//
+// Returns:
+//  The status register value (8 bits).
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+uint8_t get_Status_reg(FlashStruct_t * flash);
 
 #endif // TEMPLATE_H

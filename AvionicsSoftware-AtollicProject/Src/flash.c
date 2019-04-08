@@ -61,6 +61,27 @@ void enable_write(FlashStruct_t * flash){
 
 }
 
+void 	erase_sector(FlashStruct_t * flash,uint32_t address){
+
+	enable_write(flash);
+	uint8_t command = ERASE_SEC_COMMAND;
+	uint8_t command_address [] = { PP_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+
+	spi_transmit_long(flash->hspi,command_address,4,NULL,0,10);
+
+}
+
+uint8_t get_Status_reg(FlashStruct_t * flash){
+
+	uint8_t command = GET_STATUS_REG_COMMAND;
+	uint8_t status_reg;
+
+
+	spi_read(flash->hspi,&command,&status_reg,2,10);
+
+	return status_reg;
+}
+
 void program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint8_t num_bytes){
 
 	//Writes must be enabled.
