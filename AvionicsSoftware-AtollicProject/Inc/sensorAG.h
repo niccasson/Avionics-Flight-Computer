@@ -1,23 +1,25 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef SENSOR_AG_H
+#define SENSOR_AG_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Template header file for C / C++ projects. Unused sections can be deleted.
+//  Reads sensor data for accelerometer and gyroscope from the BMI088
 //
 // History
-// 2019-03-13 by Benjamin Zacharias
+// 2019-03-29 by Benjamin Zacharias
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include <stm32f4xx_hal_uart_io.h> // this was in the xtract includes. Not sure if necessary
+#include "bmi08x.h"
+#include "bmi088.h"
+#include "SPI.h"
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -37,20 +39,7 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define TIME_INTERVAL1 2000 //2s
-#define TIME_INTERVAL2 200	//200ms
-#define TIME_INTERVAL3 3000 //3s
-#define TIME_INTERVAL4 200	//200ms
-//input for timer: default user button
-//TODO use official pin variables from a file
-#define INPUT_PIN GPIO_PIN_13
-#define INPUT_PORT GPIOC
-//output1 for timer: default on board LD2
-#define OUTPUT1_PIN GPIO_PIN_5
-#define OUTPUT1_PORT GPIOA
-//output2 for timer: right now is the same as output 1
-#define OUTPUT2_PIN GPIO_PIN_5
-#define OUTPUT2_PORT GPIOA
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -61,7 +50,14 @@
 // Returns:
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void Timer_GPIO_Init(void);
-void vTask_timer(void *param);
 
-#endif // TIMER_H
+//Wrapper functions for read and write
+int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+void delay(uint32_t period);
+void vTask_sensorAG(void *param);
+//configuration functions for accelerometer and gyroscope
+int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+
+#endif // SENSOR_AG_H

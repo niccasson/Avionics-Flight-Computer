@@ -85,15 +85,25 @@ void vTask_timer(void *param){
 	uart = (UART_HandleTypeDef*) param;
 	taskENABLE_INTERRUPTS();
 
+	//Set both of the outputs to 0 for setup
+	HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
+	HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
+
 	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
 	while(1){
 		if(!HAL_GPIO_ReadPin(INPUT_PORT, INPUT_PIN)){
 				//TODO check how long outputs should be on for
 				//TODO check in init that outputs are off before connecting to e-matches
 				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
-				HAL_GPIO_TogglePin(OUTPUT1_PORT,OUTPUT1_PIN); //toggle Output 1
-				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //wait for the second time interval
-				HAL_GPIO_TogglePin(OUTPUT1_PORT,OUTPUT1_PIN); //toggle Output 1
+				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_SET); //turn Output 1 on
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //keep Output on for the designated time
+				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
+
+
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL3)); //wait for the second time interval
+				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_SET); //turn Output 2 on
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL4)); //keep Output 2 on for the desired time
+				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
 		}
 	}
 }

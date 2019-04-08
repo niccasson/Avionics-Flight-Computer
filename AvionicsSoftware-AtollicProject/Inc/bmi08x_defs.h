@@ -107,11 +107,11 @@
 
 /** \name enable bmi085 sensor */
 #ifndef BMI08X_ENABLE_BMI085
-#define BMI08X_ENABLE_BMI085       1
+#define BMI08X_ENABLE_BMI085       0
 #endif
 /** \name enable bmi088 sensor */
 #ifndef BMI08X_ENABLE_BMI088
-#define BMI08X_ENABLE_BMI088       0
+#define BMI08X_ENABLE_BMI088       1
 #endif
 
 /** \name enable bmi08x sensor */
