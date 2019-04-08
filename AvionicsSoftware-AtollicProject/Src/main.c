@@ -39,15 +39,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
-<<<<<<< Updated upstream
-  MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
-=======
+
   MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
 
-testIMU();
-//testpress();
+  //testIMU();
+  //testpress();
   //testFlash();
->>>>>>> Stashed changes
+
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
