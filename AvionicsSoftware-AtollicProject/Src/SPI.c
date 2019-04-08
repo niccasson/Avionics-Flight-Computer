@@ -330,7 +330,7 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
 		while(stat != HAL_OK){}
 	}
     /* Send the tx_buffer to slave */
-	if(tx_buffer_size){
+	if(tx_buffer_size>0){
 		stat = HAL_SPI_Transmit(&hspi,tx_buffer,tx_buffer_size,timeout);
 		while(stat != HAL_OK){}
 	}
