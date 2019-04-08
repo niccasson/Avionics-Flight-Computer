@@ -38,10 +38,10 @@
 #define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
 #define USR_GPIO_P3_3_PORT		GPIOC
 //UART 6
-#define UART_TX_PIN				GPIO_PIN_12
+#define UART_TX_PIN				GPIO_PIN_11
 #define UART_TX_PORT			GPIOA
 
-#define UART_RX_PIN				GPIO_PIN_11
+#define UART_RX_PIN				GPIO_PIN_12
 #define UART_RX_PORT			GPIOA
 
 //Flash Memory
