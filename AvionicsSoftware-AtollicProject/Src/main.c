@@ -24,7 +24,9 @@ UART_HandleTypeDef huart2_ptr; //global var to be passed to vTask_xtract
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void StartDefaultTask(void const * argument);
-
+void testFlash();
+void testpress();
+void testIMU();
 
 int main(void)
 {
@@ -37,7 +39,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
+<<<<<<< Updated upstream
   MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
+=======
+  MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
+
+testIMU();
+//testpress();
+  //testFlash();
+>>>>>>> Stashed changes
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
@@ -56,7 +66,7 @@ int main(void)
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
-  osKernelStart();
+ // osKernelStart();
   
   /* We should never get here as control is now taken by the scheduler */
 
@@ -108,6 +118,95 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+
+void testFlash(){
+
+	  HAL_Delay(1000);
+	  FlashStruct_t flash;
+	  flash.hspi = flash_spi;
+
+	  FlashStatus_t stat = initialize_flash(&flash);
+
+	  if(stat == FLASH_OK){
+
+		  transmit_line(&huart6_ptr,"SPI INIT good!");
+		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	  }
+	  else{
+
+		  transmit_line(&huart6_ptr,"SPI INIT FAILED.");
+	  }
+
+//	  uint8_t dataTX[1] = {0xAA};
+//	  uint8_t dataRX[1] = {0x00};
+//
+//	  program_page(&flash,0x00000000,dataTX,1);
+//
+//	  HAL_Delay(10);
+//	  read_page(&flash,0x00000000,dataRX,1);
+//
+//	  if(dataRX[0] == dataTX[0]){
+//
+//		  transmit_line(&huart6_ptr,"SPI read successful.");
+//		  //HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+//	  }
+//
+//	  erase_sector(&flash,0x00000000);
+//	  volatile uint8_t stat_reg = 0xFF;
+//	  while(IS_DEVICE_BUSY(stat_reg)){
+//		  stat_reg = get_Status_reg(&flash);
+//
+//		  HAL_Delay(1);
+//	  }
+//
+//
+//	  read_page(&flash,0x00000000,dataRX,1);
+//	  if(dataRX[0] == 0xFF){
+//
+//		  transmit_line(&huart6_ptr,"Flash Erased Successfully.");
+//		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+//	  }
+}
+
+void testpress(){
+SPI_HandleTypeDef spi2;
+
+spi2_init(&spi2);
+HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+uint8_t id= 0x50;
+
+uint8_t command[] = {0x80};
+uint8_t id_read[] = {0x00,0x00};
+
+spi_read_long(spi2,command,1,id_read,2,10);
+
+if(id_read[1] == id){
+
+	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+}
+
+}
+
+void testIMU(){
+	SPI_HandleTypeDef spi3;
+
+	spi3_init(&spi3);
+	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+	uint8_t id= 0x1E;
+
+	uint8_t command[] = {0x80};
+	uint8_t id_read[] = {0x00,0x00,0x00,0x00};
+	uint8_t id_dummy[] = {0x00,0x00};
+	spi_read_long(spi3,command,1,id_dummy,2,10);
+	spi_read_long(spi3,command,1,id_read,2,10);
+
+	if(id_read[1] == id){
+
+		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	}
+
 }
 
 
