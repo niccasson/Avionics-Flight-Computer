@@ -25,10 +25,12 @@
 void spi1_init(SPI_HandleTypeDef * hspi);
 void spi2_init(SPI_HandleTypeDef * hspi);
 void spi3_init(SPI_HandleTypeDef * hspi);
+
 void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 
-
+void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, uint8_t *tx_buffer, uint16_t tx_buffer_size, uint32_t timeout);
+void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
@@ -261,7 +263,7 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 }
 
 
-void spi_read_long(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout){
+void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout){
 
 
 	GPIO_TypeDef * port = SPI1_CS_PORT;
@@ -286,18 +288,21 @@ void spi_read_long(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buff
 	//Could also use HAL_TransmittReceive.
 
 	//Send the address to read from.
-	stat = HAL_SPI_Transmit(&hspi,addr_buffer,addr_buffer_size,timeout);
-	while(stat != HAL_OK){}
-
+	if(addr_buffer_size){
+		stat = HAL_SPI_Transmit(&hspi,addr_buffer,addr_buffer_size,timeout);
+		while(stat != HAL_OK){}
+	}
 	//Read in the specified number of bytes.
-	stat = HAL_SPI_Receive(&hspi,rx_buffer,rx_buffer_size,timeout);
-	while(stat != HAL_OK){}
+	if(rx_buffer_size){
+		stat = HAL_SPI_Receive(&hspi,rx_buffer,rx_buffer_size,timeout);
+		while(stat != HAL_OK){}
+	}
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 
 }
 
 
-void spi_transmit_long(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, uint8_t *tx_buffer, uint16_t tx_buffer_size, uint32_t timeout){
+void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, uint8_t *tx_buffer, uint16_t tx_buffer_size, uint32_t timeout){
 
 
 	HAL_StatusTypeDef stat;
@@ -320,13 +325,15 @@ void spi_transmit_long(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_add
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_RESET);
 
 	/* Select the slave register (**1 byte address**) first via a transmit */
-	stat = HAL_SPI_Transmit(&hspi,reg_addr,reg_addr_size,timeout);
-    while(stat != HAL_OK){}
-
+	if(reg_addr_size>0){
+		stat = HAL_SPI_Transmit(&hspi,reg_addr,reg_addr_size,timeout);
+		while(stat != HAL_OK){}
+	}
     /* Send the tx_buffer to slave */
-	stat = HAL_SPI_Transmit(&hspi,tx_buffer,tx_buffer_size,timeout);
-	while(stat != HAL_OK){}
-
+	if(tx_buffer_size){
+		stat = HAL_SPI_Transmit(&hspi,tx_buffer,tx_buffer_size,timeout);
+		while(stat != HAL_OK){}
+	}
 	//Write the CS hi (release)
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 

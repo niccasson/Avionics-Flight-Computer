@@ -180,7 +180,7 @@ uint8_t id= 0x50;
 uint8_t command[] = {0x80};
 uint8_t id_read[] = {0x00,0x00};
 
-spi_read_long(spi2,command,1,id_read,2,10);
+spi_receive(spi2,command,1,id_read,2,10);
 
 if(id_read[1] == id){
 
@@ -199,8 +199,8 @@ void testIMU(){
 	uint8_t command[] = {0x80};
 	uint8_t id_read[] = {0x00,0x00,0x00,0x00};
 	uint8_t id_dummy[] = {0x00,0x00};
-	spi_read_long(spi3,command,1,id_dummy,2,10);
-	spi_read_long(spi3,command,1,id_read,2,10);
+	spi_receive(spi3,command,1,id_dummy,2,10);
+	spi_receive(spi3,command,1,id_read,2,10);
 
 	if(id_read[1] == id){
 
