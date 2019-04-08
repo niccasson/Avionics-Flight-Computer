@@ -218,9 +218,10 @@ void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,
     while(stat != HAL_OK){}
 
     /* Send the tx_buffer to slave */
-	stat = HAL_SPI_Transmit(&hspi,tx_buffer,size,timeout);
-	while(stat != HAL_OK){}
-
+    if(size>1){
+		stat = HAL_SPI_Transmit(&hspi,tx_buffer,size,timeout);
+		while(stat != HAL_OK){}
+    }
 	//Write the CS hi (release)
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 }
