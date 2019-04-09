@@ -96,10 +96,10 @@ int8_t bmi088_init(struct bmi08x_dev *dev)
 	/*initialize bmi088 accel sensor*/
 	rslt = bmi08a_init(dev);
 
-	//if (rslt == BMI08X_OK) { //TODO PUT THIS BACK IN
-	//	/*initialize bmi088 gyro sensor*/
-	//	rslt = bmi08g_init(dev);
-	//}
+	if (rslt == BMI08X_OK) {
+		/*initialize bmi088 gyro sensor*/
+		rslt = bmi08g_init(dev);
+	}
 
 	return rslt;
 }

@@ -27,11 +27,16 @@
 #define SPI2_CS_PIN		PRES_SPI_CS_PIN
 #define SPI2_CS_PORT	PRES_SPI_CS_PORT
 
-
+//Right now the timeout value is used to select between chip selects.
+//We should really find a better way to do this!
+//Currently only works with the send and receive functions.
+//timeout=10 for acc
+//timeout=other for gyro
 #define SPI3_CS1_PIN	IMU_SPI_ACC_CS_PIN
 #define SPI3_CS1_PORT	IMU_SPI_ACC_CS_PORT
 
-
+#define SPI3_CS2_PIN	IMU_SPI_GYRO_CS_PIN
+#define SPI3_CS2_PORT	IMU_SPI_GYRO_CS_PORT
 
 // Description:
 //  This function initializes the SPI1 interface.

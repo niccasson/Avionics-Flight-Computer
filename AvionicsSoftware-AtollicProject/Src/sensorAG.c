@@ -39,16 +39,16 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-static struct bmi08x_dev bmi088dev = {
+struct bmi08x_dev bmi088dev = {
         .accel_id = 0,
-        .gyro_id = 0,
+        .gyro_id = 1,
         .intf = BMI08X_SPI_INTF, // determines if we use SPI or I2C
         .read = user_spi_read,   //a function pointer to our spi read function
         .write = user_spi_write, //a function pointer to our spi write function
         .delay_ms = delay//user_delay_milli_sec
 };
 
-static SPI_HandleTypeDef hspi; //using global variable
+ SPI_HandleTypeDef hspi; //using global variable
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ void vTask_sensorAG(void *param){
 	UART_HandleTypeDef * uart_ptr = (UART_HandleTypeDef *)param;
 	//These structures store XYZ data as a 16-bit int. For a float, add "_f" to the end of the structure name
 	struct bmi08x_sensor_data accel_data;
-	//struct bmi08x_sensor_data gyro_data;
+	struct bmi08x_sensor_data gyro_data;
 
 	//initialize the SPI
 	spi3_init(&hspi); //use the already made SPI interface
@@ -93,8 +93,10 @@ void vTask_sensorAG(void *param){
 
 	if(rslt == BMI08X_OK){
 
-		transmit_line(uart_ptr,"ACC INIT SUCCESS!");
+		transmit_line(uart_ptr,"IMU INIT SUCCESS!");
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	}else{
+		transmit_line(uart_ptr,"IMU INIT FAILURE!");
 	}
 	//configure accelerometer
 	rslt = accel_config(&bmi088dev, rslt);
@@ -104,15 +106,30 @@ void vTask_sensorAG(void *param){
 		transmit_line(uart_ptr,"ACC CONFIG SUCCESS!");
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 	}
+	else{
+
+		transmit_line(uart_ptr,"ACC CONFIG FAILURE!");
+	}
+
 	//configure gyroscope
-	//rslt = gyro_config(&bmi088dev, rslt);
+	rslt = gyro_config(&bmi088dev, rslt);
+	if(rslt == BMI08X_OK){
+
+		transmit_line(uart_ptr,"GYRO CONFIG SUCCESS!");
+		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	}
+	else{
+
+		transmit_line(uart_ptr,"GYRO CONFIG FAILURE!");
+	}
 
 	//main loop: continuously read sensor data
 	while(1){
 		rslt = bmi08a_get_data(&accel_data, &bmi088dev);
-		//rslt = bmi08g_get_data(&gyro_data, &bmi088dev);
-		char data_str[30];
-		snprintf(data_str,27,"x: %d y: %d z: %d",accel_data.x,accel_data.y,accel_data.z);
+		rslt = bmi08g_get_data(&gyro_data, &bmi088dev);
+
+		char data_str[75];
+		sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d",accel_data.x,accel_data.y,accel_data.z,gyro_data.x,gyro_data.y,gyro_data.z);
 		transmit_line(uart_ptr,data_str);
 		vTaskDelay(pdMS_TO_TICKS(500));
 	}
@@ -185,14 +202,30 @@ int8_t gyro_config(struct bmi08x_dev *dev, int8_t rslt){
 
 int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len){
 	//debug removeHAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN, GPIO_PIN_SET);
-	spi_receive(hspi, &reg_addr,1, data, len, 10); // The register address will always be 1.
+
+	if(dev_addr == 0x00|| dev_addr == 0x1E){
+		//Accelerometer.
+		spi_receive(hspi, &reg_addr,1, data, len, 10); // The register address will always be 1.
+
+	}
+	else if(dev_addr == 0x01|| dev_addr == 0x0F){
+//		//Gyroscope.
+		spi_receive(hspi, &reg_addr,1, data, len, 11); // The register address will always be 1.
+	}
 	//delay(500);
 	//HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN, GPIO_PIN_RESET);
 	//delay(500);
 	return BMI08X_OK;
 }
 int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len){
+
+	if(dev_addr == 0x00 || dev_addr == 0x1E){
 	spi_send(hspi, &reg_addr,1, data, len, 10);
+	}
+	else if(dev_addr == 0x01 || dev_addr == 0x0F){
+		spi_send(hspi, &reg_addr,1, data, len, 11);
+
+	}
 	return BMI08X_OK;
 }
 
