@@ -26,6 +26,7 @@ void StartDefaultTask(void const * argument);
 void testFlash();
 void testpress();
 void testIMU();
+void MX_GPIO_Init();
 
 int main(void)
 {
@@ -66,15 +67,15 @@ int main(void)
   //  	  Error_Handler();
   //    }
 
-  if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
-          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
-          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-      				 (void*) &huart2_ptr,	/* pointer to the huart object */
-      				 2,			 /* This task will run at priorirt 2. */
-      				 NULL		 /* This example does not use the task handle. */
-            	  	  ) == 1){
-      	  Error_Handler();
-        }
+//  if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
+//          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
+//          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+//      				 (void*) &huart2_ptr,	/* pointer to the huart object */
+//      				 2,			 /* This task will run at priorirt 2. */
+//      				 NULL		 /* This example does not use the task handle. */
+//            	  	  ) == 1){
+//      	  Error_Handler();
+//        }
 
   //if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
   //  		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
@@ -265,40 +266,20 @@ void testIMU(){
 
 
 
-<<<<<<< HEAD
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  GPIO_InitTypeDef GPIO_InitStruct;
+void MX_GPIO_Init(void)
+{
+		  /* GPIO Ports Clock Enable */
+		  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  //set up PA5 as output.
-  GPIO_InitStruct.Pin       = USR_LED_PIN;
-  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
-  HAL_GPIO_Init(USR_LED_PORT,&GPIO_InitStruct);
+		  GPIO_InitTypeDef GPIO_InitStruct;
+
+		  //set up PA5 as output.
+		  GPIO_InitStruct.Pin       = USR_LED_PIN;
+		  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+		  HAL_GPIO_Init(USR_LED_PORT,&GPIO_InitStruct);
 }
-=======
-//static void MX_GPIO_Init(void)
-//{
-//
-//  /* GPIO Ports Clock Enable */
-//  __HAL_RCC_GPIOA_CLK_ENABLE();
-//  __HAL_RCC_GPIOC_CLK_ENABLE();
-//
-//  GPIO_InitTypeDef GPIO_InitStruct;
-//
-//  //set up PA5 as output.
-//  GPIO_InitStruct.Pin       = GPIO_PIN_5;
-//  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
-//  HAL_GPIO_Init(GPIOA,&GPIO_InitStruct);
-//
-//
-//  //set up the push button as input
-//  GPIO_InitStruct.Pin		= GPIO_PIN_13;
-//  GPIO_InitStruct.Mode 		= GPIO_MODE_INPUT;
-//  GPIO_InitStruct.Pull		= GPIO_PULLDOWN;
-//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-//}
->>>>>>> benFork/v0.1
+
 
 void StartDefaultTask(void const * argument)
 {
