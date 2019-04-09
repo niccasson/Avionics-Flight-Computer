@@ -138,46 +138,46 @@ void testFlash(){
 		  transmit_line(&huart6_ptr,"SPI INIT FAILED.");
 	  }
 
-	  uint8_t dataTX[256] ;
-	  uint8_t dataRX[256];
-
-	  int i;
-	  for(i=0;i<256;i++){
-
-		  dataTX[i] = i;
-		  dataRX[i] = 0;
-	  }
-
-	  stat = program_page(&flash,0x00001000,dataTX,256);
-
-	  while(stat != FLASH_OK && stat!=FLASH_ERROR){
-		  stat = program_page(&flash,0x00001000,dataTX,256);	//Make sure program is actually done.
-	  }
-
-	  HAL_Delay(10);
-
-	  stat = read_page(&flash,0x00001000,dataRX,256);
-
-//	  if(dataRX[0] == dataTX[0]){
+//	  uint8_t dataTX[256] ;
+//	  uint8_t dataRX[256];
 //
-//		  transmit_line(&huart6_ptr,"SPI read successful.");
-//		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+//	  int i;
+//	  for(i=0;i<256;i++){
+//
+//		  dataTX[i] = i;
+//		  dataRX[i] = 0;
 //	  }
-	  uint8_t good= 0xFF;
-	  for(i=0;i<256;i++){
-
-		  if(dataTX[i] != dataRX[i]){
-			  good --;
-		  }
-	  }
-
-	  if(good == 0xFF){
-		  		  transmit_line(&huart6_ptr,"SPI read successful.");
-		  		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
-
-	  }
-	  volatile int count = 0;
-//	  stat = erase_sector(&flash,0x00000010);
+//
+//	  stat = program_page(&flash,0x00001000,dataTX,256);
+//
+//	  while(stat != FLASH_OK && stat!=FLASH_ERROR){
+//		  stat = program_page(&flash,0x00001000,dataTX,256);	//Make sure program is actually done.
+//	  }
+//
+//	  HAL_Delay(10);
+//
+//	  stat = read_page(&flash,0x00001000,dataRX,256);
+//
+////	  if(dataRX[0] == dataTX[0]){
+////
+////		  transmit_line(&huart6_ptr,"SPI read successful.");
+////		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+////	  }
+//	  uint8_t good= 0xFF;
+//	  for(i=0;i<256;i++){
+//
+//		  if(dataTX[i] != dataRX[i]){
+//			  good --;
+//		  }
+//	  }
+//
+//	  if(good == 0xFF){
+//		  		  transmit_line(&huart6_ptr,"SPI read successful.");
+//		  		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+//
+//	  }
+//	  volatile int count = 0;
+//	  stat = erase_sector(&flash,0x00001000);
 //	  uint8_t stat_reg = 0xFF;
 //	  while(IS_DEVICE_BUSY(stat_reg)){
 //		  stat_reg = get_status_reg(&flash);
@@ -185,19 +185,19 @@ void testFlash(){
 //		  HAL_Delay(1);
 //	  }
 
-	  	  erase_device(&flash);
-	  	  uint8_t stat_reg = 0xFF;
-	  	  while(IS_DEVICE_BUSY(stat_reg)){
-	  		  stat_reg = get_status_reg(&flash);
-	  		  count++;
-	  		  HAL_Delay(1);
-	  	  }
-
-	  read_page(&flash,0x00001000,dataRX,256);
-	  if(dataRX[128] == 0xFF){
-
-		  transmit_line(&huart6_ptr,"Flash Erased Success!");
-	  }
+	  	  //erase_device(&flash);
+//	  	  uint8_t stat_reg = 0xFF;
+//	  	  while(IS_DEVICE_BUSY(stat_reg)){
+//	  		  stat_reg = get_status_reg(&flash);
+//	  		  count++;
+//	  		  HAL_Delay(1);
+//	  	  }
+//
+//	  read_page(&flash,0x00001000,dataRX,256);
+//	  if(dataRX[128] == 0xFF){
+//
+//		  transmit_line(&huart6_ptr,"Flash Erased Success!");
+//	  }
 }
 
 

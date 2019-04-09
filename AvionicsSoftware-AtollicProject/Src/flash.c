@@ -74,6 +74,7 @@ FlashStatus_t enable_write(FlashStruct_t * flash){
 
 		result = FLASH_OK;
 	}
+	return result;
 }
 
 FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address){
@@ -148,7 +149,6 @@ FlashStatus_t program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data
 	}
 	else{
 
-		uint8_t status_reg = get_status_reg(flash);
 
 		//Writes must be enabled.
 		enable_write(flash);
