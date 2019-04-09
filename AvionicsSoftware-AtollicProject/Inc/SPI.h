@@ -27,10 +27,9 @@
 #define SPI2_CS_PIN		PRES_SPI_CS_PIN
 #define SPI2_CS_PORT	PRES_SPI_CS_PORT
 
-//Need to look into how to switch between acc and gyro cs pins.
-#define SPI3_CS_PIN		IMU_SPI_ACC_CS_PIN
-#define SPI3_CS_PORT	IMU_SPI_ACC_CS_PORT
 
+#define SPI3_CS1_PIN	IMU_SPI_ACC_CS_PIN
+#define SPI3_CS1_PORT	IMU_SPI_ACC_CS_PORT
 
 
 

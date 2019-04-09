@@ -6,7 +6,10 @@
 //
 // File Description:
 //  Reads sensor data for accelerometer and gyroscope from the BMI088
-//
+//  On prototype flight computer:
+//			+Z is out of the board (perpendicular to board surface when on a table).
+//			+X is towards the recovery circuit (away from where the battery connects).
+//			+Y is towards the crystal (away from the programming header).
 // History
 // 2019-03-29 by Benjamin Zacharias
 // - Created.
@@ -23,6 +26,7 @@
 #include "bmi088.h"
 #include "cmsis_os.h" //used in the delay function
 #include "hardwareDefs.h"
+#include "main.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -73,7 +77,10 @@ int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void vTask_sensorAG(void *param){
+
+	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 	int8_t rslt;
+	UART_HandleTypeDef * uart_ptr = (UART_HandleTypeDef *)param;
 	//These structures store XYZ data as a 16-bit int. For a float, add "_f" to the end of the structure name
 	struct bmi08x_sensor_data accel_data;
 	//struct bmi08x_sensor_data gyro_data;
@@ -84,9 +91,19 @@ void vTask_sensorAG(void *param){
 	//initialize the sensors
 	rslt = bmi088_init(&bmi088dev);
 
+	if(rslt == BMI08X_OK){
+
+		transmit_line(uart_ptr,"ACC INIT SUCCESS!");
+		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	}
 	//configure accelerometer
 	rslt = accel_config(&bmi088dev, rslt);
 
+	if(rslt == BMI08X_OK){
+
+		transmit_line(uart_ptr,"ACC CONFIG SUCCESS!");
+		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+	}
 	//configure gyroscope
 	//rslt = gyro_config(&bmi088dev, rslt);
 
@@ -94,7 +111,10 @@ void vTask_sensorAG(void *param){
 	while(1){
 		rslt = bmi08a_get_data(&accel_data, &bmi088dev);
 		//rslt = bmi08g_get_data(&gyro_data, &bmi088dev);
-
+		char data_str[30];
+		snprintf(data_str,27,"x: %d y: %d z: %d",accel_data.x,accel_data.y,accel_data.z);
+		transmit_line(uart_ptr,data_str);
+		vTaskDelay(pdMS_TO_TICKS(500));
 	}
 }
 
@@ -165,14 +185,14 @@ int8_t gyro_config(struct bmi08x_dev *dev, int8_t rslt){
 
 int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len){
 	//debug removeHAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN, GPIO_PIN_SET);
-	spi_read(hspi, &reg_addr, data, len, 10);
+	spi_receive(hspi, &reg_addr,1, data, len, 10); // The register address will always be 1.
 	//delay(500);
 	//HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN, GPIO_PIN_RESET);
 	//delay(500);
 	return BMI08X_OK;
 }
 int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len){
-	spi_transmit(hspi, &reg_addr, data, len, 10);
+	spi_send(hspi, &reg_addr,1, data, len, 10);
 	return BMI08X_OK;
 }
 

@@ -66,16 +66,16 @@ int main(void)
   //        	  	  ) == -1){
   //  	  Error_Handler();
   //    }
-
-//  if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
-//          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
-//          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-//      				 (void*) &huart2_ptr,	/* pointer to the huart object */
-//      				 2,			 /* This task will run at priorirt 2. */
-//      				 NULL		 /* This example does not use the task handle. */
-//            	  	  ) == 1){
-//      	  Error_Handler();
-//        }
+//
+  if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
+          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
+          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+      				 (void*) &huart6_ptr,	/* pointer to the huart object */
+      				 2,			 /* This task will run at priorirt 2. */
+      				 NULL		 /* This example does not use the task handle. */
+            	  	  ) == 1){
+      	  Error_Handler();
+        }
 
   //if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
   //  		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
@@ -90,7 +90,7 @@ int main(void)
  
 
   /* Start scheduler -- comment to not use FreeRTOS */
- // osKernelStart();
+  osKernelStart();
   
   /* We should never get here as control is now taken by the scheduler */
 
