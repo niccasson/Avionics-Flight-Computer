@@ -98,6 +98,7 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
 //     rx_buffer       A pointer to where the received bytes should be stored
 //     total_size      The number of bytes being sent and received. (# of bytes read + 1)
 //     timeout         The timeout value in milliseconds.
+
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 
 

@@ -2,13 +2,13 @@
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS>Avionics-2019
+//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  xtraxt.c UART CLI utility to pull data off of STM32 flash memory
+//  Template source file for C / C++ projects. Unused sections can be deleted.
 //
 // History
-// 2019-02-15 by Eric Kapilik
+// 2019-03-13 by Benjamin Zacharias
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -19,8 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xtract.h"
-#include "buttonpress.h"
+#include "timer.h"
 #include "cmsis_os.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,60 +48,64 @@ static UART_HandleTypeDef* uart;
 // Returns:
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-//static int private_fnc(
-//    const void * param1, // Enter description of param1.
-//    const void * param2  // Enter description of param2.
-//    );
-
+void timerOn(void); //turns the timer on
+void timerOff(void); //turns the timer off
+int getTimer(void); //gets the current value of the timer
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void vTask_xtract(void *pvParameters){
-	uart = (UART_HandleTypeDef*) pvParameters;
+void Timer_GPIO_Init(void){
 
-	intro(); //display help on start up
-	char *cmd_buf = (char*) malloc(sizeof(char) * BUFFER_SIZE); //command buffer
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  GPIO_InitTypeDef GPIO_InitStruct;
+
+  //set up OUTPUT1 as output.
+  GPIO_InitStruct.Pin       = OUTPUT1_PIN;
+  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(OUTPUT1_PORT,&GPIO_InitStruct);
+
+  //set up OUTPUT2 as output
+  //TODO add this back in when OUTPUT2 is available
+  //GPIO_InitStruct.Pin       = OUTPUT2_PIN;
+  //GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+  //HAL_GPIO_Init(OUTPUT2_PORT,&GPIO_InitStruct);
+
+
+  //set up the push button as input
+  GPIO_InitStruct.Pin		= INPUT_PIN;
+  GPIO_InitStruct.Mode 		= GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull		= GPIO_PULLDOWN;
+  HAL_GPIO_Init(INPUT_PORT, &GPIO_InitStruct);
+}
+
+void vTask_timer(void *param){
+	uart = (UART_HandleTypeDef*) param;
+	taskENABLE_INTERRUPTS();
+
+	//Set both of the outputs to 0 for setup
+	HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
+	HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
 
 	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
 	while(1){
-		transmit(uart, ">> ");
-		cmd_buf = receive_command(uart); //puts input into buffrx
-		handle_command(cmd_buf); //handles command sitting in buffrx
-	}
-} //vTaskUART_CLI END
+		if(!HAL_GPIO_ReadPin(INPUT_PORT, INPUT_PIN)){
+				//TODO check how long outputs should be on for
+				//TODO check in init that outputs are off before connecting to e-matches
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
+				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_SET); //turn Output 1 on
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //keep Output on for the designated time
+				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
 
-void handle_command(char* command){
-	char output[BUFFER_SIZE];
 
-	if(strcmp(command, "help") == 0){
-		help();
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL3)); //wait for the second time interval
+				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_SET); //turn Output 2 on
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL4)); //keep Output 2 on for the desired time
+				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
+		}
 	}
-	else if(strcmp(command, "read") == 0){
-		read();
-	}
-	else if(strcmp(command, "start") == 0){
-		start();
-	}
-	else{
-		sprintf(output, "Command [%s] not recognized.", command);
-		transmit_line(uart, output);
-	}
-
 }
 
-void intro(void){
-	transmit_line(uart, "========== Welcome to Xtract ==========\r\n"
-				"This is a command line interface tool made by the Avionics subdivison of the Rockets team.\r\n\r\n"
-				"Here are some commands to get you started:");
-	help();
-}
-
-void help(void){
-	transmit_line(uart, "Commands:\r\n"
-					"\t[help] - displays the help menu and more commands\r\n"
-					"\t[read] - reads the test array to your console");
-}
-
-void read(void){
-	transmit_line(uart, "1010101001001010010100101.... haha like that, right?");
-}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------

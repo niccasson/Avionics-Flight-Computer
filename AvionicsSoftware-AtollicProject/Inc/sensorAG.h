@@ -1,117 +1,28 @@
-#ifndef HARDWARE_DEF_H
-#define HARDWARE_DEF_H	
+#ifndef SENSOR_AG_H
+#define SENSOR_AG_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS/Avionics/2019
+//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Definitions for all the pins and other hardware constants for the prototype flight computer
+//  Reads sensor data for accelerometer and gyroscope from the BMI088
 //
 // History
-// 2019-03-27 by Joseph Howarth
+// 2019-03-29 by Benjamin Zacharias
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#include "bmi08x.h"
+#include "bmi088.h"
+#include "SPI.h"
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//User LED(red)
-#define USR_LED_PIN				GPIO_PIN_5
-#define USR_LED_PORT			GPIOB
-
-//User Pushbutton (S1)
-#define USR_PB_PIN				GPIO_PIN_1
-#define USR_PB_PORT				GPIOB
-
-
-//User GPIO
-#define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.
-#define USR_GPIO_P3_4_PORT		GPIOC
-
-#define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
-#define USR_GPIO_P3_3_PORT		GPIOC
-//UART 6
-
-#define UART_TX_PIN				GPIO_PIN_11
-#define UART_TX_PORT			GPIOA
-
-#define UART_RX_PIN				GPIO_PIN_12
-#define UART_RX_PORT			GPIOA
-
-//Flash Memory on SPI1
-
-#define FLASH_SPI_PORT			GPIOA
-
-#define FLASH_SPI_SCK_PIN		GPIO_PIN_5
-#define FLASH_SPI_MISO_PIN		GPIO_PIN_6
-#define FLASH_SPI_MOSI_PIN		GPIO_PIN_7
-
-#define FLASH_SPI_CS_PIN		GPIO_PIN_5
-#define FLASH_SPI_CS_PORT		GPIOC
-
-#define FLASH_WP_PIN			GPIO_PIN_0
-#define FLASH_WP_PORT			GPIOB
-
-#define	FLASH_HOLD_PIN			GPIO_PIN_4
-#define FLASH_HOLD_PORT			GPIOC
-
-
-
-//Pressure Sensor on SPI2
-
-#define PRES_SPI_PORT			GPIOB
-
-#define PRES_SPI_SCK_PIN		GPIO_PIN_13
-#define PRES_SPI_MISO_PIN		GPIO_PIN_14
-#define PRES_SPI_MOSI_PIN		GPIO_PIN_15
-
-#define PRES_SPI_CS_PIN			GPIO_PIN_7
-#define PRES_SPI_CS_PORT		GPIOC
-
-#define	PRES_INT_PIN			GPIO_PIN_6
-#define PRES_INT_PORT			GPIOC
-
-
-
-//IMU on SPI3
-
-#define IMU_SPI_PORT			GPIOC
-
-#define IMU_SPI_SCK_PIN			GPIO_PIN_10
-#define IMU_SPI_MISO_PIN		GPIO_PIN_11
-#define IMU_SPI_MOSI_PIN		GPIO_PIN_12
-
-#define IMU_SPI_ACC_CS_PIN  	GPIO_PIN_9
-#define IMU_SPI_ACC_CS_PORT 	GPIOB
-
-#define IMU_SPI_GYRO_CS_PIN  	GPIO_PIN_6
-#define IMU_SPI_GYRO_CS_PORT 	GPIOB
-
-#define IMU_ACC_INT_PIN  		GPIO_PIN_7
-#define IMU_ACC_INT_PORT 		GPIOB
-
-#define IMU_GYRO_INT_PIN  		GPIO_PIN_8
-#define IMU_GYRO_INT_PORT 		GPIOB
-
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
-
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
-
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
-
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -129,7 +40,6 @@
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -141,5 +51,13 @@
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+//Wrapper functions for read and write
+int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+void delay(uint32_t period);
+void vTask_sensorAG(void *param);
+//configuration functions for accelerometer and gyroscope
+int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 
-#endif // TEMPLATE_H
+#endif // SENSOR_AG_H

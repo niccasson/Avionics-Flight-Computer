@@ -1,118 +1,31 @@
-#ifndef HARDWARE_DEF_H
-#define HARDWARE_DEF_H	
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS/Avionics/2019
+//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Definitions for all the pins and other hardware constants for the prototype flight computer
+//  Template source file for C / C++ projects. Unused sections can be deleted.
 //
 // History
-// 2019-03-27 by Joseph Howarth
+// 2019-03-13 by Benjamin Zacharias
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "buttonpress.h"
+#include "cmsis_os.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//User LED(red)
-#define USR_LED_PIN				GPIO_PIN_5
-#define USR_LED_PORT			GPIOB
-
-//User Pushbutton (S1)
-#define USR_PB_PIN				GPIO_PIN_1
-#define USR_PB_PORT				GPIOB
-
-
-//User GPIO
-#define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.
-#define USR_GPIO_P3_4_PORT		GPIOC
-
-#define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
-#define USR_GPIO_P3_3_PORT		GPIOC
-//UART 6
-
-#define UART_TX_PIN				GPIO_PIN_11
-#define UART_TX_PORT			GPIOA
-
-#define UART_RX_PIN				GPIO_PIN_12
-#define UART_RX_PORT			GPIOA
-
-//Flash Memory on SPI1
-
-#define FLASH_SPI_PORT			GPIOA
-
-#define FLASH_SPI_SCK_PIN		GPIO_PIN_5
-#define FLASH_SPI_MISO_PIN		GPIO_PIN_6
-#define FLASH_SPI_MOSI_PIN		GPIO_PIN_7
-
-#define FLASH_SPI_CS_PIN		GPIO_PIN_5
-#define FLASH_SPI_CS_PORT		GPIOC
-
-#define FLASH_WP_PIN			GPIO_PIN_0
-#define FLASH_WP_PORT			GPIOB
-
-#define	FLASH_HOLD_PIN			GPIO_PIN_4
-#define FLASH_HOLD_PORT			GPIOC
-
-
-
-//Pressure Sensor on SPI2
-
-#define PRES_SPI_PORT			GPIOB
-
-#define PRES_SPI_SCK_PIN		GPIO_PIN_13
-#define PRES_SPI_MISO_PIN		GPIO_PIN_14
-#define PRES_SPI_MOSI_PIN		GPIO_PIN_15
-
-#define PRES_SPI_CS_PIN			GPIO_PIN_7
-#define PRES_SPI_CS_PORT		GPIOC
-
-#define	PRES_INT_PIN			GPIO_PIN_6
-#define PRES_INT_PORT			GPIOC
-
-
-
-//IMU on SPI3
-
-#define IMU_SPI_PORT			GPIOC
-
-#define IMU_SPI_SCK_PIN			GPIO_PIN_10
-#define IMU_SPI_MISO_PIN		GPIO_PIN_11
-#define IMU_SPI_MOSI_PIN		GPIO_PIN_12
-
-#define IMU_SPI_ACC_CS_PIN  	GPIO_PIN_9
-#define IMU_SPI_ACC_CS_PORT 	GPIOB
-
-#define IMU_SPI_GYRO_CS_PIN  	GPIO_PIN_6
-#define IMU_SPI_GYRO_CS_PORT 	GPIOB
-
-#define IMU_ACC_INT_PIN  		GPIO_PIN_7
-#define IMU_ACC_INT_PORT 		GPIOB
-
-#define IMU_GYRO_INT_PIN  		GPIO_PIN_8
-#define IMU_GYRO_INT_PORT 		GPIOB
-
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
-
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
-
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
-
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
-
+static UART_HandleTypeDef* uart;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -126,20 +39,64 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// CONSTANTS
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  Enter description for static function here.
 //
 // Returns:
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void timerOn(void); //turns the timer on
+void timerOff(void); //turns the timer off
+int getTimer(void); //gets the current value of the timer
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// FUNCTIONS
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void Timerbp_GPIO_Init(void)
+{
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  GPIO_InitTypeDef GPIO_InitStruct;
+
+  //set up OUTPUT1 as output.
+  GPIO_InitStruct.Pin       = OUTPUT1_PIN;
+  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(OUTPUT1_PORT,&GPIO_InitStruct);
+
+  //set up OUTPUT2 as output
+  //TODO add this back in when OUTPUT2 is available
+  //GPIO_InitStruct.Pin       = OUTPUT2_PIN;
+  //GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+  //HAL_GPIO_Init(OUTPUT2_PORT,&GPIO_InitStruct);
 
 
-#endif // TEMPLATE_H
+  //set up the push button as input
+  GPIO_InitStruct.Pin		= INPUT_PIN;
+  GPIO_InitStruct.Mode 		= GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull		= GPIO_PULLDOWN;
+  HAL_GPIO_Init(INPUT_PORT, &GPIO_InitStruct);
+}
+
+void vTask_timerbp(void *param){
+	uart = (UART_HandleTypeDef*) param;
+	taskENABLE_INTERRUPTS();
+
+	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
+	while(1){
+		if(!HAL_GPIO_ReadPin(INPUT_PORT, INPUT_PIN)){
+				//TODO check how long outputs should be on for
+				//TODO check in init that outputs are off before connecting to e-matches
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
+				HAL_GPIO_TogglePin(OUTPUT1_PORT,OUTPUT1_PIN); //toggle Output 1
+				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //wait for the second time interval
+				HAL_GPIO_TogglePin(OUTPUT1_PORT,OUTPUT1_PIN); //toggle Output 1
+		}
+	}
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------

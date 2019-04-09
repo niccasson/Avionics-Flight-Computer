@@ -61,9 +61,15 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_uart_io.h"
 #include "SPI.h"
+
 #include "flash.h"
 
 #include "xtract.h"
+
+//#include "xtract.h"
+#include "timer.h"
+#include "sensorAG.h"
+
 
 
 

@@ -26,6 +26,7 @@ void spi1_init(SPI_HandleTypeDef * hspi);
 void spi2_init(SPI_HandleTypeDef * hspi);
 void spi3_init(SPI_HandleTypeDef * hspi);
 
+
 void spi_transmit(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 
@@ -69,15 +70,12 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 		GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	    __HAL_RCC_GPIOA_CLK_ENABLE();
+
 	    __HAL_RCC_GPIOC_CLK_ENABLE();
 
 	    //Setup the SPI MOSI,MISO and SCK. These pins are fixed.
 	    GPIO_InitStruct.Pin = FLASH_SPI_SCK_PIN|FLASH_SPI_MOSI_PIN|FLASH_SPI_MISO_PIN;
-	    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	    GPIO_InitStruct.Pull = GPIO_NOPULL;
-	    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-	    HAL_GPIO_Init(FLASH_SPI_PORT, &GPIO_InitStruct);
+
 
 	    //Setup the SPI CS. This can be any pin.
 	    GPIO_InitStruct.Pin = SPI1_CS_PIN;
@@ -90,6 +88,7 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 
 
 }
+
 
 void spi2_init(SPI_HandleTypeDef *hspi){
 
@@ -147,6 +146,7 @@ void spi3_init(SPI_HandleTypeDef *hspi){
 	  __HAL_RCC_SPI3_CLK_ENABLE();
 	  __HAL_RCC_GPIOC_CLK_ENABLE();
 
+
 	  hspi->Instance = SPI3;
 	  hspi->Init.Mode = SPI_MODE_MASTER;
 	  hspi->Init.Direction = SPI_DIRECTION_2LINES;
@@ -165,10 +165,12 @@ void spi3_init(SPI_HandleTypeDef *hspi){
 	  }
 
 
+
 	  /*SPI3 GPIO Configuration
 	    PC10     ------> SPI1_SCK
 	    PC11     ------> SPI1_MISO
 	    PC12     ------> SPI1_MOSI
+
 
 	  */
 		GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -177,21 +179,27 @@ void spi3_init(SPI_HandleTypeDef *hspi){
 	    __HAL_RCC_GPIOB_CLK_ENABLE();
 
 	    //Setup the SPI MOSI,MISO and SCK. These pins are fixed.
+
 	    GPIO_InitStruct.Pin = IMU_SPI_SCK_PIN|IMU_SPI_MOSI_PIN|IMU_SPI_MISO_PIN;
+
 	    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	    GPIO_InitStruct.Pull = GPIO_NOPULL;
 	    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 	    GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
+
 	    HAL_GPIO_Init(IMU_SPI_PORT, &GPIO_InitStruct);
 
 	    //Setup the SPI CS. This can be any pin.
 	    GPIO_InitStruct.Pin = SPI3_CS_PIN;
+
 	    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	    GPIO_InitStruct.Pull = GPIO_NOPULL;
 	    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 	    GPIO_InitStruct.Alternate = 0;
 
+
 	    HAL_GPIO_Init(SPI3_CS_PORT,&GPIO_InitStruct);
+
 }
 
 void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout){
@@ -220,10 +228,12 @@ void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,
     while(stat != HAL_OK){}
 
     /* Send the tx_buffer to slave */
+
     if(size>1){
 		stat = HAL_SPI_Transmit(&hspi,tx_buffer,size,timeout);
 		while(stat != HAL_OK){}
     }
+
 	//Write the CS hi (release)
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 }
@@ -261,6 +271,7 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 
 }
+
 
 
 void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout){
@@ -338,3 +349,4 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 
 }
+
