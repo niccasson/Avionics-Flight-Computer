@@ -76,24 +76,22 @@ int8_t init_bmp3_sensor(bmp3_sensor* bmp3_sensor_ptr);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Captures pressure reading (32 bit precision) from BMP3 sensor.
+//  Captures pressure and temperature reading (64 bit precision) from BMP3 sensor.
 // NOTE:
 //  The sensor that this function will get measurements from is the one that was passed in via init_bmp3_sensor
 //
 // Returns:
-//  uint32_t - 32 bit precision pressure measurement
+//  0 if success
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint32_t bmp3_get_press();
+int8_t get_sensor_data(struct bmp3_dev *dev, struct bmp3_data* data);
 
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Captures temperature reading (32 bit precision) from BMP3 sensor.
-// NOTE:
-//  The sensor that this function will get measurements from is the one that was passed in via init_bmp3_sensor
-//
-// Returns:
-//  uint32_t - 32 bit precision temperature measurement
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int32_t bmp3_get_temp();
-
+/*!
+ *  @brief Prints the execution status of the APIs.
+ *
+ *  @param[in] api_name : name of the API whose execution status has to be printed.
+ *  @param[in] rslt     : error code returned by the API whose execution status has to be printed.
+ *
+ *  @return void.
+ */
+void bmp3_print_rslt(const char api_name[], int8_t rslt);
 #endif // PRESSURE_SENSOR_BMP3_H

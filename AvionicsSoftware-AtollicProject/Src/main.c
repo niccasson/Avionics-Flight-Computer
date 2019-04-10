@@ -18,7 +18,7 @@
 #include "cmsis_os.h"
 
 osThreadId defaultTaskHandle;
-UART_HandleTypeDef huart2_ptr; //global var to be passed to vTask_xtract
+UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -52,21 +52,10 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-//  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
-//    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
-//    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-//				 (void*) &huart2_ptr,	/* pointer to the huart object */
-//				 1,			 /* This task will run at priority 1. */
-//				 NULL		 /* This example does not use the task handle. */
-//      	  	  ) == -1){
-//	  Error_Handler();
-//  }
-
-
-  if(xTaskCreate(	vTask_pressure_sensor, 	 /* Pointer to the function that implements the task */
-      		  	"pressure sensor", /* Text name for the task. This is only to facilitate debugging */
+  if(xTaskCreate(	vTask_pressure_sensor_bmp3, 	 /* Pointer to the function that implements the task */
+      		  	"bmp388 pressure sensor", /* Text name for the task. This is only to facilitate debugging */
       		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-  				 (void*) &huart2_ptr,	/* function arguments */
+  				 (void*) &huart6_ptr,	/* function arguments */
   				 1,			 /* This task will run at priority 1. */
   				 NULL		 /* This example does not use the task handle. */
         	  	  ) == -1){
@@ -75,7 +64,7 @@ int main(void)
 
 
   /* Start scheduler -- comment to not use FreeRTOS */
- // osKernelStart();
+  osKernelStart();
   
   /* We should never get here as control is now taken by the scheduler */
 
@@ -129,7 +118,7 @@ void SystemClock_Config(void)
   }
 }
 
-
+/*
 void testFlash(){
 
 	  HAL_Delay(1000);
@@ -147,6 +136,7 @@ void testFlash(){
 
 		  transmit_line(&huart6_ptr,"SPI INIT FAILED.");
 	  }
+*/
 
 //	  uint8_t dataTX[1] = {0xAA};
 //	  uint8_t dataRX[1] = {0x00};
@@ -177,7 +167,7 @@ void testFlash(){
 //		  transmit_line(&huart6_ptr,"Flash Erased Successfully.");
 //		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 //	  }
-}
+//}
 
 void testpress(){
 SPI_HandleTypeDef spi2;

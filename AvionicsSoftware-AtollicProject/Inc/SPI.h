@@ -60,7 +60,7 @@ void spi3_init(SPI_HandleTypeDef *hspi);
 
 
 
-/ Description:
+// Description:
 //  This function reads one or more bytes over the SPI bus, by sending multiple address bytes
 //  and then reading multiple bytes.
 //

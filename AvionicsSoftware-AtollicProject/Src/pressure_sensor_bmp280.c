@@ -164,7 +164,7 @@ static uint8_t bmp280_config(uint8_t filter, uint8_t os_pres, uint8_t odr){
 	return rslt;
 }
 
-void vTask_pressure_sensor(void *pvParameters){
+void vTask_pressure_sensor_280(void *pvParameters){
 	int rslt;
     int32_t temp32;
     uint32_t pres32;
