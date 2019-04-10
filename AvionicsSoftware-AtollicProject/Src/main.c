@@ -44,7 +44,7 @@ int main(void)
 
 
   MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
-
+  transmit_line(&huart6_ptr,"UmSAts FliGTH coMpUTeR");
   //testIMU();
   //testpress();
   //testFlash();
@@ -245,6 +245,16 @@ if(id_read[1] == id){
 }
 
 void testIMU(){
+
+//    GPIO_InitTypeDef GPIO_InitStruct3 = {0};
+//    GPIO_InitStruct3.Pin = SPI3_CS2_PIN;
+//    GPIO_InitStruct3.Mode = GPIO_MODE_OUTPUT_PP;
+//    GPIO_InitStruct3.Pull = GPIO_NOPULL;
+//    GPIO_InitStruct3.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+//    GPIO_InitStruct3.Alternate = 0;
+//
+//    HAL_GPIO_Init(SPI3_CS2_PORT,&GPIO_InitStruct3);
+
 	SPI_HandleTypeDef spi3;
 
 	spi3_init(&spi3);
@@ -258,6 +268,13 @@ void testIMU(){
 	spi_receive(spi3,command,1,id_read,2,10);
 
 	if(id_read[1] == id){
+
+		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	}
+
+	spi_receive(spi3,command,1,id_read,2,11);
+
+	if(id_read[0] == 0x0F){
 
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 	}

@@ -189,20 +189,21 @@ void spi3_init(SPI_HandleTypeDef *hspi){
 
 	    HAL_GPIO_Init(IMU_SPI_PORT, &GPIO_InitStruct);
 
-//	    GPIO_InitTypeDef GPIO_InitStruct2 = {0};
-//	    //Setup the SPI CS. This can be any pin.
-//	    GPIO_InitStruct2.Pin = GPIO_PIN_6|GPIO_PIN_9;
-//
-//	    GPIO_InitStruct2.Mode = GPIO_MODE_OUTPUT_PP;
-//	    GPIO_InitStruct2.Pull = GPIO_NOPULL;
-//	    GPIO_InitStruct2.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-//	    GPIO_InitStruct2.Alternate = 0;
-//
-//	    HAL_GPIO_Init(GPIOB,&GPIO_InitStruct2);
-	    GPIOB->MODER |= GPIO_MODER_MODE6_0 ;
-	    GPIOB->MODER |= GPIO_MODER_MODE9_0;
+	    GPIO_InitTypeDef GPIO_InitStruct2 = {0};
+	    //Setup the SPI CS. This can be any pin.
+	    GPIO_InitStruct2.Pin = SPI3_CS1_PIN|SPI3_CS2_PIN;
 
-	    GPIOB->ODR |= (GPIO_PIN_6) | (GPIO_PIN_9);
+	    GPIO_InitStruct2.Mode = GPIO_MODE_OUTPUT_PP;
+	    GPIO_InitStruct2.Pull = GPIO_NOPULL;
+	    GPIO_InitStruct2.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	    GPIO_InitStruct2.Alternate = 0;
+
+	    HAL_GPIO_Init(SPI3_CS1_PORT,&GPIO_InitStruct2);
+
+	    //Make sure both CS are high. Undefined behavior if these are not high be for communication begins.
+	    HAL_GPIO_WritePin(SPI3_CS1_PORT,SPI3_CS1_PIN,GPIO_PIN_SET);
+	    HAL_GPIO_WritePin(SPI3_CS2_PORT,SPI3_CS2_PIN,GPIO_PIN_SET);
+
 }
 
 void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout){
@@ -295,12 +296,12 @@ void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer
     else if (hspi.Instance == SPI3){
 
     	if(timeout == 10){
-    		port = GPIOB;
-    		    	  pin = GPIO_PIN_9;
+    		port = SPI3_CS1_PORT;
+    		pin = SPI3_CS1_PIN;
     	}
     	else{
-       	  port = GPIOB;
-        	  pin = GPIO_PIN_6;
+    		port = SPI3_CS2_PORT;
+    		pin = SPI3_CS2_PIN;
     	}
 
     }
@@ -342,12 +343,12 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
     else if (hspi.Instance == SPI3){
 
     	if(timeout == 10){
-    	  port = GPIOB;
-    	  pin = GPIO_PIN_9;
+    		port = SPI3_CS1_PORT;
+    		pin = SPI3_CS1_PIN;
     	}
     	else{
-      	  port = GPIOB;
-      	  pin = GPIO_PIN_6;
+    		port = SPI3_CS2_PORT;
+    		pin = SPI3_CS2_PIN;
     	}
     }
 	//Write the CS low (lock)
