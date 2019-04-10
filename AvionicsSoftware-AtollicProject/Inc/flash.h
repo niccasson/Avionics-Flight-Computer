@@ -45,6 +45,9 @@
 #define		MID_BYTE_MASK_24B		0x0000FF00
 #define 	LOW_BYTE_MASK_24B		0x000000FF
 
+#define 	FLASH_START_ADDRESS		0x00000000
+#define		FLASH_SIZE_BYTES		8000000
+
 //Status Reg. Bits
 #define 	P_ERR_BIT				0x06		//Programming Error Bit.
 #define		E_ERR_BIT				0x05		//Erase Error Bit.

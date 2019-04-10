@@ -75,7 +75,11 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 
 	    //Setup the SPI MOSI,MISO and SCK. These pins are fixed.
 	    GPIO_InitStruct.Pin = FLASH_SPI_SCK_PIN|FLASH_SPI_MOSI_PIN|FLASH_SPI_MISO_PIN;
-
+	    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+	    GPIO_InitStruct.Pull = GPIO_NOPULL;
+	    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+	    HAL_GPIO_Init(FLASH_SPI_PORT, &GPIO_InitStruct);
 
 	    //Setup the SPI CS. This can be any pin.
 	    GPIO_InitStruct.Pin = SPI1_CS_PIN;
@@ -85,7 +89,7 @@ void spi1_init(SPI_HandleTypeDef *hspi){
 	    GPIO_InitStruct.Alternate = 0;
 
 	    HAL_GPIO_Init(SPI1_CS_PORT,&GPIO_InitStruct);
-
+	    HAL_GPIO_WritePin(SPI1_CS_PORT,SPI1_CS_PIN,GPIO_PIN_SET);
 
 }
 
@@ -311,12 +315,12 @@ void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer
 	//Could also use HAL_TransmittReceive.
 
 	//Send the address to read from.
-	if(addr_buffer_size){
+	if(addr_buffer_size>0){
 		stat = HAL_SPI_Transmit(&hspi,addr_buffer,addr_buffer_size,timeout);
 		while(stat != HAL_OK){}
 	}
 	//Read in the specified number of bytes.
-	if(rx_buffer_size){
+	if(rx_buffer_size>0){
 		stat = HAL_SPI_Receive(&hspi,rx_buffer,rx_buffer_size,timeout);
 		while(stat != HAL_OK){}
 	}

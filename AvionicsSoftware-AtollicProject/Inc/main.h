@@ -63,12 +63,13 @@ extern "C" {
 #include "stm32f4xx_hal_uart_io.h"
 #include "SPI.h"
 //#include <stdlib.h>
+#include <string.h>
 #include "flash.h"
 #include "dataLogging.h"
 #include "xtract.h"
 
 //#include "xtract.h"
-#include "timer.h"
+//#include "timer.h"
 #include "sensorAG.h"
 
 

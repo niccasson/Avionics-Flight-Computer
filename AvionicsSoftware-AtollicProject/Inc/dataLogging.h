@@ -23,12 +23,12 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define DATA_BUFFER_SIZE			256		//Matches flash memory page size.
+#define DATA_BUFFER_SIZE			256	//Matches flash memory page size.
 #define TIME_RESOLUTION		10		//In ms.
-#define ACC_TYPE 			0x80
-#define GYRO_TYPE			0x40
-#define PRES_TYPE			0x20
-#define	TEMP_TYPE			0x10
+#define ACC_TYPE 			0x8000
+#define GYRO_TYPE			0x4000
+#define PRES_TYPE			0x2000
+#define	TEMP_TYPE			0x1000
 
 #define	ACC_LENGTH	6		//Length of a accelerometer measurement in bytes.
 #define	GYRO_LENGTH	6		//Length of a gyroscope measurement in bytes.
@@ -60,9 +60,9 @@ typedef union{
 
 	struct{
 
-		uint8_t header;
-		uint8_t time_delta;
-		uint8_t data[18];
+		uint16_t header;				//First four bits are the measurement type.// rest are time stamp in ticks. This is being stored in the flash LSB first (should change?)
+		uint8_t data[18];			//Will be of format acc,gyro,pres,temp or acc,gyro. Acc and Gyro will be x,y,z.
+
 	} format;
 
 	uint8_t bytes[20];

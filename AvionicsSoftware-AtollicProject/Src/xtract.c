@@ -27,6 +27,7 @@
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 static UART_HandleTypeDef* uart;
+static FlashStruct_t * flash;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -58,7 +59,12 @@ static UART_HandleTypeDef* uart;
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void vTask_xtract(void *pvParameters){
-	uart = (UART_HandleTypeDef*) pvParameters;
+
+	xtractParams * params = (xtractParams *)pvParameters;
+
+	uart = params->uart;
+	flash = params->flash;
+
 
 	intro(); //display help on start up
 	char *cmd_buf = (char*) malloc(sizeof(char) * BUFFER_SIZE); //command buffer
@@ -81,7 +87,7 @@ void handle_command(char* command){
 		read();
 	}
 	else if(strcmp(command, "start") == 0){
-		start();
+		//start();
 	}
 	else{
 		sprintf(output, "Command [%s] not recognized.", command);
@@ -104,5 +110,22 @@ void help(void){
 }
 
 void read(void){
-	transmit_line(uart, "1010101001001010010100101.... haha like that, right?");
+	//transmit_line(uart, "1010101001001010010100101.... haha like that, right?");
+
+	uint8_t buffer[256*10]; 	//Read 10 pages from flash at a time;
+
+	uint32_t bytesRead = 0;
+	uint32_t currentAddress = FLASH_START_ADDRESS;
+
+	while (bytesRead < FLASH_SIZE_BYTES){
+
+		read_page(flash,currentAddress,buffer,256*10);
+		transmit_bytes(uart,buffer,256*10);
+
+		currentAddress += (256*10);
+		currentAddress = currentAddress % FLASH_SIZE_BYTES;
+
+		bytesRead += 256*10;
+		vTaskDelay(pdMS_TO_TICKS(10));
+	}
 }

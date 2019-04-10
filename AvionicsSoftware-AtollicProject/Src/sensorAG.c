@@ -137,7 +137,7 @@ void vTask_sensorAG(void *param){
 		sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d, at time %lu",dataStruct.data_acc.x,dataStruct.data_acc.y,dataStruct.data_acc.z,dataStruct.data_gyro.x,dataStruct.data_gyro.y,dataStruct.data_gyro.z,dataStruct.time_ticks);
 		transmit_line(uart_ptr,data_str);
 
-		vTaskDelay(pdMS_TO_TICKS(500));
+		vTaskDelay(pdMS_TO_TICKS(200));
 	}
 }
 

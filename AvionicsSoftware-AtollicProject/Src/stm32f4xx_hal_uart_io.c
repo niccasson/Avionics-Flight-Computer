@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-
+#include "main.h"
 #include <stm32f4xx_hal_uart_io.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,6 +154,13 @@ void transmit_line(UART_HandleTypeDef* uart, char* message){
 	bufftx[i++] = '\0';
 
 	if(HAL_UART_Transmit(uart, (uint8_t*)bufftx, sizeof(uint8_t) * (i), TIMEOUT_MAX) != HAL_OK){
+					//Do something meaningful here...
+	}
+}
+
+void transmit_bytes(UART_HandleTypeDef* uart, uint8_t *bytes,uint16_t numBytes){
+
+	if(HAL_UART_Transmit(uart, bytes, numBytes, TIMEOUT_MAX) != HAL_OK){
 					//Do something meaningful here...
 	}
 }

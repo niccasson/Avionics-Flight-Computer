@@ -187,8 +187,8 @@ FlashStatus_t		check_flash_id(FlashStruct_t * flash){
 	uint8_t command = READ_ID_COMMAND;
 	uint8_t id[3] = {0,0,0};
 
-	uint8_t bytes_to_send = sizeof(command)+sizeof(id)/sizeof(id[0]);
-	spi_receive(flash->hspi,(uint8_t *)&command,1,id,bytes_to_send,10);
+	//uint8_t bytes_to_send = sizeof(command)+sizeof(id)/sizeof(id[0]);
+	spi_receive(flash->hspi,(uint8_t *)&command,1,id,3,10);
 
 	if((id[0] == MANUFACTURER_ID) && (id[1] == DEVICE_ID_MSB) && (id[2] == DEVICE_ID_LSB) ){
 
@@ -203,6 +203,7 @@ FlashStatus_t		initialize_flash(FlashStruct_t * flash){
 
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
+
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	//This configures the write protect pin(Active Low).
     GPIO_InitStruct.Pin = FLASH_WP_PIN;
@@ -225,10 +226,10 @@ FlashStatus_t		initialize_flash(FlashStruct_t * flash){
 
     HAL_GPIO_WritePin(FLASH_WP_PORT,FLASH_WP_PIN,GPIO_PIN_SET);
     HAL_GPIO_WritePin(FLASH_HOLD_PORT,FLASH_HOLD_PIN,GPIO_PIN_SET);
-
 	//Set up the SPI interface
 	spi1_init(&(flash->hspi));
 
+    HAL_GPIO_WritePin(FLASH_SPI_CS_PORT,FLASH_SPI_CS_PIN,GPIO_PIN_SET);
 	FlashStatus_t result = FLASH_ERROR;
 	result = check_flash_id(flash);
 
