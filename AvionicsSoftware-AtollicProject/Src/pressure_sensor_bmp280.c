@@ -220,8 +220,7 @@ static int8_t spi_reg_write(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uin
 {
 	int8_t rslt = 0; //assume success
 
-	spi_transmit( *(static_bmp280_sensor->hspi_ptr), &reg_addr, reg_data, length, TIMEOUT);
-	/* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
+	spi_send(*(static_bmp280_sensor->hspi_ptr), &reg_addr, 1, reg_data, length, TIMEOUT);
 
     return rslt;
 }
@@ -243,9 +242,8 @@ static int8_t spi_reg_read(uint8_t cs, uint8_t reg_addr, uint8_t *reg_data, uint
 {
 	int8_t rslt = 0; //assume success
 
-	//1 + length because spi_read needs to know that 1 byte will be used for selecting register address, and length refers to the message size
-    spi_read( *(static_bmp280_sensor->hspi_ptr), &reg_addr, reg_data, 1+length, TIMEOUT);
-    /* can do confirmation on reg_data if want to make rslt more useful.. so far we just assume spi_read worked! */
+    spi_receive( *(static_bmp280_sensor->hspi_ptr), &reg_addr, 1, reg_data, length, TIMEOUT);
+
     return rslt;
 }
 
