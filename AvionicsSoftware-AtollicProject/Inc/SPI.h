@@ -13,60 +13,82 @@
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 #ifndef SPI_H
 #define SPI_H
 
-#define SPI1_CS_PIN		GPIO_PIN_9
-#define SPI1_CS_PORT	GPIOA
-
-#define SPI2_CS_PIN		0	//PLACEHOLDER
-#define SPI2_CS_PORT	0	//PLACEHOLDER
-
-#define SPI3_CS_PIN		0	//PLACEHOLDER
-#define SPI3_CS_PORT	0	//PLACEHOLDER
-
-
-
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_spi.h"
+#include "hardwareDefs.h"
 
-void spi1_init(SPI_HandleTypeDef *hspi);
+
+#define SPI1_CS_PIN		FLASH_SPI_CS_PIN
+#define SPI1_CS_PORT	FLASH_SPI_CS_PORT
+
+#define SPI2_CS_PIN		PRES_SPI_CS_PIN
+#define SPI2_CS_PORT	PRES_SPI_CS_PORT
+
+//Need to look into how to switch between acc and gyro cs pins.
+#define SPI3_CS_PIN		IMU_SPI_ACC_CS_PIN
+#define SPI3_CS_PORT	IMU_SPI_ACC_CS_PORT
+
+
+
+
 // Description:
 //  This function initializes the SPI1 interface.
 //
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
+void spi1_init(SPI_HandleTypeDef *hspi);
 
-void spi2_init(SPI_HandleTypeDef *hspi); //NOT FINISHED
+
 // Description:
 //  This function initializes the SPI2 interface.
 //
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
+void spi2_init(SPI_HandleTypeDef *hspi);
 
-void spi3_init(SPI_HandleTypeDef *hspi);//NOT FINISHED
+
 // Description:
 //  This function initializes the SPI3 interface.
 //
 // Parameters:
 //     hspi		       A reference used to refer to the SPI interface.
+void spi3_init(SPI_HandleTypeDef *hspi);
 
-void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
-// Description:
-//  This function transfers one or more bytes over the SPI bus.
-//  It firstly sends the register address (hard coded to be a 1 byte address).
+
+
+
+/ Description:
+//  This function reads one or more bytes over the SPI bus, by sending multiple address bytes
+//  and then reading multiple bytes.
 //
 // Parameters:
-//     hspi            A reference used to refer to the SPI interface.
-//     addr_buffer     A pointer to the address to write to.
-//     tx_buffer       A pointer to the bytes to send.
-//     size            The number of bytes being sent.
-//     timeout         The timeout value in milliseconds.
+//     hspi             A reference used to refer to the SPI interface.
+//     addr_buffer      A pointer to the buffer holding address to read from.
+//	   addr_buffer_size The number of bytes in the address/command.
+//     rx_buffer        A pointer to where the received bytes should be stored
+//     rx_buffer_size   The number of bytes being  received.
+//     timeout          The timeout value in milliseconds.
+void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer_size,uint8_t *rx_buffer,uint16_t rx_buffer_size, uint32_t timeout);
 
 
-void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 // Description:
+//  This function transfers one or more bytes over the SPI bus.
+//  It firstly sends multiple register address bytes.
+//
+// Parameters:
+//     hspi            	A reference used to refer to the SPI interface.
+//     addr_buffer     	A pointer to the buffer holding the address to write to.
+//	   addr_buffer_size	Number of bytes in the address/command.
+//     tx_buffer       	A pointer to the bytes to send.
+//     size            	The number of bytes being sent.
+//     timeout         	The timeout value in milliseconds.
+void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, uint8_t *tx_buffer, uint16_t tx_buffer_size, uint32_t timeout);
+
+
+// Description: DO NOT USE. Will be deleted in future versions of the code!
 //  This function reads one or more bytes over the SPI bus, by sending the address
 //  and then reading
 //
@@ -76,6 +98,20 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 //     rx_buffer       A pointer to where the received bytes should be stored
 //     total_size      The number of bytes being sent and received. (# of bytes read + 1)
 //     timeout         The timeout value in milliseconds.
+void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
+
+
+// Description:  DO NOT USE! Will be deleted in future versions of the code!
+//  This function transfers one or more bytes over the SPI bus.
+//  It firstly sends the register address (hard coded to be a 1 byte address).
+//
+// Parameters:
+//     hspi            A reference used to refer to the SPI interface.
+//     addr_buffer     A pointer to the address to write to.
+//     tx_buffer       A pointer to the bytes to send.
+//     size            The number of bytes being sent.
+//     timeout         The timeout value in milliseconds.
+void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,uint16_t size, uint32_t timeout);
 
 #endif /* SPI_H_ */
 
