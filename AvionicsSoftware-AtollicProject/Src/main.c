@@ -15,11 +15,14 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
+
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
 SPI_HandleTypeDef flash_spi;
+ImuTaskStruct imuTaskParams ;
+LoggingStruct_t logParams;
+
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void StartDefaultTask(void const * argument);
@@ -40,11 +43,30 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
 
-
-
-
   MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
   transmit_line(&huart6_ptr,"UmSAts FliGTH coMpUTeR");
+
+  FlashStruct_t flash;
+  flash.hspi = flash_spi;
+  FlashStatus_t flash_stat = initialize_flash(&flash);
+//  if(flash_stat != FLASH_OK){
+//	  while(1);
+//  }
+
+  QueueHandle_t imuQueue_h = xQueueCreate(3,sizeof(imu_data_struct));
+
+  if(imuQueue_h == NULL){
+	  while(1);
+  }
+
+
+  logParams.flash_ptr = &flash;
+  logParams.IMU_data_queue = imuQueue_h;
+
+  imuTaskParams.huart = &huart6_ptr;
+  imuTaskParams.imu_queue = imuQueue_h;
+
+
   //testIMU();
   //testpress();
   //testFlash();
@@ -70,13 +92,22 @@ int main(void)
   if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
           		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
           		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-      				 (void*) &huart6_ptr,	/* pointer to the huart object */
+      				 (void*) &imuTaskParams,	/* pointer to the huart object */
       				 2,			 /* This task will run at priorirt 2. */
       				 NULL		 /* This example does not use the task handle. */
             	  	  ) == 1){
       	  Error_Handler();
         }
 
+  if(xTaskCreate(	loggingTask, 	 /* Pointer to the function that implements the task */
+          		  	"Logging task", /* Text name for the task. This is only to facilitate debugging */
+          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+      				 (void*) &logParams,	/* pointer to the huart object */
+      				 2,			 /* This task will run at priorirt 2. */
+      				 NULL		 /* This example does not use the task handle. */
+            	  	  ) == 1){
+      	  Error_Handler();
+        }
   //if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
   //  		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
   //  		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */

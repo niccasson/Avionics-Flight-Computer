@@ -80,10 +80,13 @@ void vTask_sensorAG(void *param){
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 	int8_t rslt;
-	UART_HandleTypeDef * uart_ptr = (UART_HandleTypeDef *)param;
+	ImuTaskStruct * params = (ImuTaskStruct *)param;
+	QueueHandle_t  queue = params->imu_queue;
+	UART_HandleTypeDef * uart_ptr = params->huart;
 	//These structures store XYZ data as a 16-bit int. For a float, add "_f" to the end of the structure name
-	struct bmi08x_sensor_data accel_data;
-	struct bmi08x_sensor_data gyro_data;
+	//struct bmi08x_sensor_data accel_data;
+	//struct bmi08x_sensor_data gyro_data;
+	imu_data_struct dataStruct;
 
 	//initialize the SPI
 	spi3_init(&hspi); //use the already made SPI interface
@@ -122,15 +125,18 @@ void vTask_sensorAG(void *param){
 
 		transmit_line(uart_ptr,"GYRO CONFIG FAILURE!");
 	}
-
+	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 	//main loop: continuously read sensor data
 	while(1){
-		rslt = bmi08a_get_data(&accel_data, &bmi088dev);
-		rslt = bmi08g_get_data(&gyro_data, &bmi088dev);
+		rslt = bmi08a_get_data(&dataStruct.data_acc, &bmi088dev);
+		rslt = bmi08g_get_data(&dataStruct.data_gyro, &bmi088dev);
+		dataStruct.time_ticks = xTaskGetTickCount();
 
-		char data_str[75];
-		sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d",accel_data.x,accel_data.y,accel_data.z,gyro_data.x,gyro_data.y,gyro_data.z);
+		xQueueSend(queue,&dataStruct,1);
+		char data_str[100];
+		sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d, at time %lu",dataStruct.data_acc.x,dataStruct.data_acc.y,dataStruct.data_acc.z,dataStruct.data_gyro.x,dataStruct.data_gyro.y,dataStruct.data_gyro.z,dataStruct.time_ticks);
 		transmit_line(uart_ptr,data_str);
+
 		vTaskDelay(pdMS_TO_TICKS(500));
 	}
 }

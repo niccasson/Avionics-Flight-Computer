@@ -1,29 +1,42 @@
-#ifndef SENSOR_AG_H
-#define SENSOR_AG_H
+#ifndef DATA_LOGGING_H
+#define DATA_LOGGING_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  UMSATS/Avionics-2019
 //
 // File Description:
-//  Reads sensor data for accelerometer and gyroscope from the BMI088
+//  Header file for the data logging module. This uses the flash memory interface to log data to memory.
 //
 // History
-// 2019-03-29 by Benjamin Zacharias
+// 2019-04-09 by Joseph Howarth
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmi08x.h"
-#include "bmi088.h"
-#include "SPI.h"
+
+#include "flash.h"
 #include "main.h"
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#define DATA_BUFFER_SIZE			256		//Matches flash memory page size.
+#define TIME_RESOLUTION		10		//In ms.
+#define ACC_TYPE 			0x80
+#define GYRO_TYPE			0x40
+#define PRES_TYPE			0x20
+#define	TEMP_TYPE			0x10
+
+#define	ACC_LENGTH	6		//Length of a accelerometer measurement in bytes.
+#define	GYRO_LENGTH	6		//Length of a gyroscope measurement in bytes.
+#define	PRES_LENGTH	3		//Length of a pressure measurement in bytes.
+#define	TEMP_LENGTH	3		//Length of a temperature measurement in bytes.
+
+
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -33,19 +46,28 @@
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-typedef struct {
-
-	struct bmi08x_sensor_data	data_acc;
-	struct bmi08x_sensor_data	data_gyro;
-	uint32_t time_ticks;	//time of sensor reading in ticks.
-}imu_data_struct;
-
 typedef struct{
 
-	UART_HandleTypeDef * huart;
-	QueueHandle_t imu_queue;
+	FlashStruct_t * flash_ptr;
 
-} ImuTaskStruct;
+	//Queues
+	QueueHandle_t IMU_data_queue;	//For holding accelerometer and gyroscope readings.
+	QueueHandle_t PRES_data_queue;	//For holding pressure and temp. readings.
+
+}LoggingStruct_t;
+
+typedef union{
+
+	struct{
+
+		uint8_t header;
+		uint8_t time_delta;
+		uint8_t data[18];
+	} format;
+
+	uint8_t bytes[20];
+
+}Measurement_t;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -54,24 +76,20 @@ typedef struct{
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  This task logs data measurements to the flash memory.
+//
+//	Should be passed a populated LoggingStruct as the parameter.
+//	The flash should be initialized before this task is started.
 //
 // Returns:
-//  Enter description of return values (if any).
+//
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void loggingTask(void * params);
 
-//Wrapper functions for read and write
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-void delay(uint32_t period);
-void vTask_sensorAG(void *param);
-//configuration functions for accelerometer and gyroscope
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-
-#endif // SENSOR_AG_H
+#endif // TEMPLATE_H
