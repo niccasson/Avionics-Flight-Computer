@@ -1,111 +1,32 @@
-#ifndef HARDWARE_DEF_H
-#define HARDWARE_DEF_H	
+#ifndef PRESSURE_SENSOR_BMP280_H
+#define PRESSURE_SENSOR_BMP280_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// pressure_sensor_bmp280.h
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS/Avionics/2019
+//  UMSATS > Avionics 2019
 //
 // File Description:
-//  Definitions for all the pins and other hardware constants for the prototype flight computer
+//  Control and usage of BMP280 sensor inside of RTOS task.
 //
 // History
-// 2019-03-27 by Joseph Howarth
+// 2019-03-04 Eric Kapilik
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#include "bmp280.h"
+#include "stm32f4xx_hal_uart_io.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "SPI.h"
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//User LED(red)
-#define USR_LED_PIN				GPIO_PIN_5
-#define USR_LED_PORT			GPIOB
-
-//User Pushbutton (S1)
-#define USR_PB_PIN				GPIO_PIN_1
-#define USR_PB_PORT				GPIOB
-
-
-//User GPIO
-#define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.
-#define USR_GPIO_P3_4_PORT		GPIOC
-
-#define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
-#define USR_GPIO_P3_3_PORT		GPIOC
-//UART 6
-#define UART_TX_PIN				GPIO_PIN_11
-#define UART_TX_PORT			GPIOA
-
-#define UART_RX_PIN				GPIO_PIN_12
-#define UART_RX_PORT			GPIOA
-
-//Flash Memory on SPI1
-#define FLASH_SPI_PORT			GPIOA
-
-#define FLASH_SPI_SCK_PIN		GPIO_PIN_5
-#define FLASH_SPI_MISO_PIN		GPIO_PIN_6
-#define FLASH_SPI_MOSI_PIN		GPIO_PIN_7
-
-#define FLASH_SPI_CS_PIN		GPIO_PIN_5
-#define FLASH_SPI_CS_PORT		GPIOC
-
-#define FLASH_WP_PIN			GPIO_PIN_0
-#define FLASH_WP_PORT			GPIOB
-
-#define	FLASH_HOLD_PIN			GPIO_PIN_4
-#define FLASH_HOLD_PORT			GPIOC
-
-
-//Pressure Sensor on SPI2
-#define PRES_SPI_PORT			GPIOB
-
-#define PRES_SPI_SCK_PIN		GPIO_PIN_13
-#define PRES_SPI_MISO_PIN		GPIO_PIN_14
-#define PRES_SPI_MOSI_PIN		GPIO_PIN_15
-
-#define PRES_SPI_CS_PIN			GPIO_PIN_7
-#define PRES_SPI_CS_PORT		GPIOC
-
-#define	PRES_INT_PIN			GPIO_PIN_6
-#define PRES_INT_PORT			GPIOC
-
-
-//IMU on SPI3
-#define IMU_SPI_PORT			GPIOC
-
-#define IMU_SPI_SCK_PIN			GPIO_PIN_10
-#define IMU_SPI_MISO_PIN		GPIO_PIN_11
-#define IMU_SPI_MOSI_PIN		GPIO_PIN_12
-
-#define IMU_SPI_ACC_CS_PIN  	GPIO_PIN_9
-#define IMU_SPI_ACC_CS_PORT 	GPIOB
-
-#define IMU_SPI_GYRO_CS_PIN  	GPIO_PIN_6
-#define IMU_SPI_GYRO_CS_PORT 	GPIOB
-
-#define IMU_ACC_INT_PIN  		GPIO_PIN_7
-#define IMU_ACC_INT_PORT 		GPIOB
-
-#define IMU_GYRO_INT_PIN  		GPIO_PIN_8
-#define IMU_GYRO_INT_PORT 		GPIOB
-
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
-
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
-
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
-
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
+#define TIMEOUT 100 // milliseconds
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -114,7 +35,12 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+// Keep SPI connection and BMP sensor struct togehter
+struct bmp280_sensor_struct{
+	struct bmp280_dev* bmp_ptr;
+	SPI_HandleTypeDef* hspi_ptr;
+};
+typedef struct bmp280_sensor_struct bmp280_sensor;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -123,17 +49,51 @@
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  Task for testing the BMP280 sensor.
+//    - initializes sensor
+//    - read data & print to UART screen cycle
 //
 // Returns:
-//  Enter description of return values (if any).
+//  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void vTask_pressure_sensor_280(void *pvParameters);
 
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Initialize BMP280 sensor and be ready to read via SPI 4w.
+//  Also performs unit self test.
+// *Based off of https://github.com/BoschSensortec/BMP280_driver/blob/master/examples/basic.c
+//
+// Returns:
+//  0 if no errors.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+int8_t init_bmp280_sensor(bmp280_sensor* bmp280_sensor_ptr);
 
-#endif // TEMPLATE_H
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Captures pressure reading (32 bit precision) from BMP280 sensor.
+// NOTE:
+//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
+//
+// Returns:
+//  uint32_t - 32 bit precision pressure measurement
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+uint32_t bmp280_get_press();
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Captures temperature reading (32 bit precision) from BMP280 sensor.
+// NOTE:
+//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
+//
+// Returns:
+//  uint32_t - 32 bit precision temperature measurement
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+int32_t bmp280_get_temp();
+
+#endif // PRESSURE_SENSOR_BMP280_H

@@ -61,7 +61,9 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 #include <stm32f4xx_hal_uart_io.h>
 #include "xtract.h"
-
+#include "SPI.h"
+#include "pressure_sensor_bmp280.h"
+#include "pressure_sensor_bmp3.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

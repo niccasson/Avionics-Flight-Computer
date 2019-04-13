@@ -22,6 +22,7 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_uart.h"
 #include "stm32f4xx_hal_conf.h"
+#include "hardwareDefs.h"
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -62,6 +63,23 @@
 //  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MX_HAL_UART2_Init(UART_HandleTypeDef* uart);
+
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//	For UART port 6 only, this should only be run ONCE. (i.e. only one program should call it, once.)
+//  Enable UART clock, initialize GPIO pins, and create UART structure required for communication.
+//
+// NOTE: If you wish to use another UART port, please create another function to initialize that port.
+//
+// Parameters:
+//  UART_HandleTypeDef Pointer (needed by communication functions)
+//
+// Returns:
+//  VOID
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void MX_HAL_UART6_Init(UART_HandleTypeDef* uart);
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
