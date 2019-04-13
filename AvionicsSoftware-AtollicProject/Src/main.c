@@ -19,9 +19,11 @@
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
+
 SPI_HandleTypeDef flash_spi;
 ImuTaskStruct imuTaskParams ;
 LoggingStruct_t logParams;
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -85,6 +87,7 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
+
   //if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
   //      		  	"timer", /* Text name for the task. This is only to facilitate debugging */
   //      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
@@ -114,17 +117,29 @@ int main(void)
 //            	  	  ) == 1){
 //      	  Error_Handler();
 //        }
-  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
-    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
-    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-				 (void*) &xtractParameters,	/* pointer to the huart object */
-				 1,			 /* This task will run at priorirt 1. */
-				 NULL		 /* This example does not use the task handle. */
-      	  	  ) == -1){
-	  Error_Handler();
-  }
+//  if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
+//    		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
+//    		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+//				 (void*) &xtractParameters,	/* pointer to the huart object */
+//				 1,			 /* This task will run at priorirt 1. */
+//				 NULL		 /* This example does not use the task handle. */
+//      	  	  ) == -1){
+//	  Error_Handler();
+//  }
 
  
+
+//  if(xTaskCreate(	vTask_pressure_sensor_bmp3, 	 /* Pointer to the function that implements the task */
+//      		  	"bmp388 pressure sensor", /* Text name for the task. This is only to facilitate debugging */
+//      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+//  				 (void*) &huart6_ptr,	/* function arguments */
+//  				 1,			 /* This task will run at priority 1. */
+//  				 NULL		 /* This example does not use the task handle. */
+//        	  	  ) == -1){
+//  	  Error_Handler();
+//    }
+
+
 
   /* Start scheduler -- comment to not use FreeRTOS */
   osKernelStart();
@@ -181,6 +196,8 @@ void SystemClock_Config(void)
   }
 }
 
+
+
 void testFlash(){
 
 	  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
@@ -198,6 +215,7 @@ void testFlash(){
 
 		  transmit_line(&huart6_ptr,"SPI INIT FAILED.");
 	  }
+
 
 //	  uint8_t dataTX[256] ;
 //	  uint8_t dataRX[256];
@@ -259,7 +277,7 @@ void testFlash(){
 //
 //		  transmit_line(&huart6_ptr,"Flash Erased Success!");
 //	  }
-}
+//}
 
 
 
@@ -322,6 +340,7 @@ void testIMU(){
 
 
 
+
 void MX_GPIO_Init(void)
 {
 		  /* GPIO Ports Clock Enable */
@@ -333,13 +352,12 @@ void MX_GPIO_Init(void)
 		  GPIO_InitStruct.Pin       = USR_LED_PIN;
 		  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
 		  HAL_GPIO_Init(USR_LED_PORT,&GPIO_InitStruct);
+
 }
 
 
 void StartDefaultTask(void const * argument)
 {
-
-
   for(;;)
   {
 
