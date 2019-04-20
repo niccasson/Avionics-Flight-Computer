@@ -92,7 +92,7 @@ FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address){
 
 		enable_write(flash);
 
-		uint8_t command_address [] = { ERASE_SEC_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+		uint8_t command_address [] = { ERASE_SEC_COMMAND, (address & (HIGH_BYTE_MASK_24B))>>16, (address & (MID_BYTE_MASK_24B))>>8, address & (LOW_BYTE_MASK_24B)};
 
 		spi_send(flash->hspi,command_address,4,NULL,0,10);
 
@@ -131,7 +131,7 @@ uint8_t get_status_reg(FlashStruct_t * flash){
 	uint8_t status_reg;
 
 
-	spi_read(flash->hspi,&command,&status_reg,2,10);
+	spi_receive(flash->hspi,&command,1,&status_reg,1,10);
 
 	return status_reg;
 }
@@ -152,9 +152,9 @@ FlashStatus_t program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data
 
 		//Writes must be enabled.
 		enable_write(flash);
-		uint8_t command_address [] = { PP_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+		uint8_t command_address [] = { PP_COMMAND, (address & (HIGH_BYTE_MASK_24B))>>16, (address & (MID_BYTE_MASK_24B))>>8, address & (LOW_BYTE_MASK_24B)};
 
-		spi_send(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+		spi_send(flash->hspi,command_address,4,data_buffer,num_bytes,200);
 		result = FLASH_OK;
 	}
 	return result;
@@ -173,9 +173,9 @@ FlashStatus_t 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_b
 	}
 	else{
 
-		uint8_t command_address [] = { READ_COMMAND, address & (HIGH_BYTE_MASK_24B), address & (MID_BYTE_MASK_24B), address & (LOW_BYTE_MASK_24B)};
+		uint8_t command_address [] = { READ_COMMAND, (address & (HIGH_BYTE_MASK_24B))>>16, (address & (MID_BYTE_MASK_24B))>>8, address & (LOW_BYTE_MASK_24B)};
 
-		spi_receive(flash->hspi,command_address,4,data_buffer,num_bytes,10);
+		spi_receive(flash->hspi,command_address,4,data_buffer,num_bytes,200);
 		result = FLASH_OK;
 	}
 	return result;
