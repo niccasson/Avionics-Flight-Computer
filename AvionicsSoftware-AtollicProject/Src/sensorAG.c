@@ -18,15 +18,8 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "sensorAG.h"
-#include "bmi088.h"
-#include "cmsis_os.h" //used in the delay function
-#include "hardwareDefs.h"
-#include "main.h"
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -65,10 +58,12 @@ struct bmi08x_dev bmi088dev = {
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
 int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+
 void delay(uint32_t period);
 
 //configures the accelerometer with hard-coded specifications
 int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+
 //configures the gyroscope with hard-coded specifications
 int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 
@@ -79,13 +74,17 @@ int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 void vTask_sensorAG(void *param){
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+
 	int8_t rslt;
+
+	//Get the parameters.
 	ImuTaskStruct * params = (ImuTaskStruct *)param;
 	QueueHandle_t  queue = params->imu_queue;
 	UART_HandleTypeDef * uart_ptr = params->huart;
-	//These structures store XYZ data as a 16-bit int. For a float, add "_f" to the end of the structure name
-	//struct bmi08x_sensor_data accel_data;
-	//struct bmi08x_sensor_data gyro_data;
+
+
+	TickType_t prevTime;
+
 	imu_data_struct dataStruct;
 
 	//initialize the SPI
@@ -96,48 +95,57 @@ void vTask_sensorAG(void *param){
 
 	if(rslt == BMI08X_OK){
 
-		transmit_line(uart_ptr,"IMU INIT SUCCESS!");
+		//transmit_line(uart_ptr,"IMU INIT SUCCESS!");
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 	}else{
-		transmit_line(uart_ptr,"IMU INIT FAILURE!");
+		//transmit_line(uart_ptr,"IMU INIT FAILURE!");
 	}
+
 	//configure accelerometer
 	rslt = accel_config(&bmi088dev, rslt);
 
 	if(rslt == BMI08X_OK){
 
-		transmit_line(uart_ptr,"ACC CONFIG SUCCESS!");
+		//transmit_line(uart_ptr,"ACC CONFIG SUCCESS!");
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 	}
 	else{
 
-		transmit_line(uart_ptr,"ACC CONFIG FAILURE!");
+		//transmit_line(uart_ptr,"ACC CONFIG FAILURE!");
 	}
 
 	//configure gyroscope
 	rslt = gyro_config(&bmi088dev, rslt);
 	if(rslt == BMI08X_OK){
 
-		transmit_line(uart_ptr,"GYRO CONFIG SUCCESS!");
+		//transmit_line(uart_ptr,"GYRO CONFIG SUCCESS!");
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 	}
 	else{
 
-		transmit_line(uart_ptr,"GYRO CONFIG FAILURE!");
+		//transmit_line(uart_ptr,"GYRO CONFIG FAILURE!");
 	}
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+
 	//main loop: continuously read sensor data
+	vTaskDelay(pdMS_TO_TICKS(100));//Wait so to make sure the other tasks have started.
+
+	prevTime=xTaskGetTickCount();
+
 	while(1){
+
 		rslt = bmi08a_get_data(&dataStruct.data_acc, &bmi088dev);
 		rslt = bmi08g_get_data(&dataStruct.data_gyro, &bmi088dev);
 		dataStruct.time_ticks = xTaskGetTickCount();
 
 		xQueueSend(queue,&dataStruct,1);
-		char data_str[100];
-		sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d, at time %lu",dataStruct.data_acc.x,dataStruct.data_acc.y,dataStruct.data_acc.z,dataStruct.data_gyro.x,dataStruct.data_gyro.y,dataStruct.data_gyro.z,dataStruct.time_ticks);
-		transmit_line(uart_ptr,data_str);
 
-		vTaskDelay(pdMS_TO_TICKS(200));
+		//char data_str[100];
+		//sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d, at time %lu",dataStruct.data_acc.x,dataStruct.data_acc.y,dataStruct.data_acc.z,dataStruct.data_gyro.x,dataStruct.data_gyro.y,dataStruct.data_gyro.z,dataStruct.time_ticks);
+		//sprintf(data_str,"i %d",dataStruct.time_ticks);
+		//transmit_line(uart_ptr,data_str);
+
+		vTaskDelayUntil(&prevTime,DATA_RATE);
 	}
 }
 

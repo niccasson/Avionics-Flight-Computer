@@ -20,7 +20,10 @@
 #include "bmi08x.h"
 #include "bmi088.h"
 #include "SPI.h"
-#include "main.h"
+#include "cmsis_os.h"
+#include "hardwareDefs.h"
+#include "configuration.h"
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -33,6 +36,7 @@
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+//Groups both sensor readings and a time stamp.
 typedef struct {
 
 	struct bmi08x_sensor_data	data_acc;
@@ -40,6 +44,7 @@ typedef struct {
 	uint32_t time_ticks;	//time of sensor reading in ticks.
 }imu_data_struct;
 
+//Parameters for vTask_sensorAG.
 typedef struct{
 
 	UART_HandleTypeDef * huart;
@@ -68,8 +73,11 @@ typedef struct{
 //Wrapper functions for read and write
 int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
 int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+
 void delay(uint32_t period);
+
 void vTask_sensorAG(void *param);
+
 //configuration functions for accelerometer and gyroscope
 int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
