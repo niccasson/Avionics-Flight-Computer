@@ -270,7 +270,9 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 
 	//Send the address to read from.
 	stat = HAL_SPI_Transmit(&hspi,addr_buffer,1,timeout);
-	while(stat != HAL_OK){}
+	while(stat != HAL_OK){
+		stat = HAL_SPI_GetState(&hspi);
+	}
 
 	//Read in the specified number of bytes.
 	stat = HAL_SPI_Receive(&hspi,rx_buffer,total_size-1,timeout);
