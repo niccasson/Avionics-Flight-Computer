@@ -17,9 +17,8 @@
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <pressure_sensor_bmp3.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -139,31 +138,44 @@ static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 }
 
 void vTask_pressure_sensor_bmp3(void *pvParameters){
+
+	PressureTaskParams * params = (PressureTaskParams *) pvParameters;
+	QueueHandle_t bmp_queue = params->bmp388_queue;
+	uart = params->huart;	//Get uart for printing to console
+
 	int8_t rslt;
 
 	/* Variable used to store the compensated data */
-	struct bmp3_data data;
+	bmp_data_struct dataStruct;
 
-    uart = (UART_HandleTypeDef*) pvParameters; //Get uart for printing to console
+	TickType_t prevTime;
+
 
 	bmp3_sensor* bmp3_sensor_ptr = malloc(sizeof(bmp3_sensor));
+
 	rslt = init_bmp3_sensor(bmp3_sensor_ptr);
 	bmp3_print_rslt("init_bmp3_sensor", rslt);
 
     /* Configuration */
 	rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
 
+	prevTime =xTaskGetTickCount();
 
     while(1){
-    	get_sensor_data(static_bmp3_sensor->bmp_ptr, &data);
 
-    	sprintf(buf, "Pressure: %d [Pa]", data.pressure);
-    	transmit_line(uart, buf);
+    	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+    	dataStruct.time_ticks = xTaskGetTickCount();
 
-    	sprintf(buf, "Temperature: %ld [0.01 C]", data.temperature);
-    	transmit_line(uart, buf);
+    	xQueueSend(bmp_queue,&dataStruct,1);
 
-    	static_bmp3_sensor->bmp_ptr->delay_ms(1000);
+    	//sprintf(buf, "Pressure: %ld [Pa] at time: %d", (uint32_t)dataStruct.data.pressure,dataStruct.time_ticks);
+    	//sprintf(buf, "P %d",dataStruct.time_ticks);
+    	//transmit_line(uart, buf);
+
+    	//sprintf(buf, "Temperature: %ld [0.01 C]", (int32_t)dataStruct.data.temperature);
+    	//transmit_line(uart, buf);
+
+    	vTaskDelayUntil(&prevTime,DATA_RATE*2);
     }
 }
 

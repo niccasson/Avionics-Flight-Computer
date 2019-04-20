@@ -20,9 +20,11 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include "bmp3.h"
 #include "stm32f4xx_hal_uart_io.h"
-#include "FreeRTOS.h"
+#include "cmsis_os.h"
 #include "task.h"
 #include "SPI.h"
+#include "configuration.h"
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -35,12 +37,29 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Keep SPI connection and BMP sensor struct togehter
+
+// Keep SPI connection and BMP sensor struct together
 struct bmp3_sensor_struct{
 	struct bmp3_dev* bmp_ptr;
 	SPI_HandleTypeDef* hspi_ptr;
 };
 typedef struct bmp3_sensor_struct bmp3_sensor;
+
+//Groups a time stamp with the reading.
+typedef struct {
+
+	struct bmp3_data data;
+	uint32_t time_ticks; //time of sensor reading in ticks.
+
+} bmp_data_struct;
+
+//Parameters for vTask_pressure_sensor_bmp3.
+typedef struct{
+
+	UART_HandleTypeDef * huart;
+	QueueHandle_t	bmp388_queue;
+
+} PressureTaskParams;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
