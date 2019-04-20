@@ -117,7 +117,7 @@ void MX_HAL_UART6_Init(UART_HandleTypeDef* uart){
 
 	   /* Create UART struct */
 	   uart->Instance = USART6;
-	   uart->Init.BaudRate = 9600;
+	   uart->Init.BaudRate = 115200;
 	   uart->Init.WordLength = UART_WORDLENGTH_8B;
 	   uart->Init.StopBits = UART_STOPBITS_1;
 	   uart->Init.Parity = UART_PARITY_NONE;
@@ -162,6 +162,7 @@ void transmit_bytes(UART_HandleTypeDef* uart, uint8_t *bytes,uint16_t numBytes){
 
 	if(HAL_UART_Transmit(uart, bytes, numBytes, TIMEOUT_MAX) != HAL_OK){
 					//Do something meaningful here...
+		while(1);
 	}
 }
 
