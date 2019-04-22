@@ -1,28 +1,25 @@
-#ifndef SENSOR_AG_H
-#define SENSOR_AG_H
+#ifndef ALTIMETER_H
+#define ALTIMETER_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Reads sensor data for accelerometer and gyroscope from the BMI088
+//  Template header file for C / C++ projects. Unused sections can be deleted.
 //
 // History
-// 2019-03-29 by Benjamin Zacharias
+// 2019-01-13 by Tamkin Rahman
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmi08x.h"
-#include "bmi088.h"
-#include "SPI.h"
-#include "cmsis_os.h"
-#include "hardwareDefs.h"
-#include "configuration.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "pressure_sensor_bmp280.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -36,21 +33,6 @@
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//Groups both sensor readings and a time stamp.
-typedef struct {
-
-	struct bmi08x_sensor_data	data_acc;
-	struct bmi08x_sensor_data	data_gyro;
-	uint32_t time_ticks;	//time of sensor reading in ticks.
-}imu_data_struct;
-
-//Parameters for vTask_sensorAG.
-typedef struct{
-
-	UART_HandleTypeDef * huart;
-	QueueHandle_t imu_queue;
-
-} ImuTaskStruct;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -58,28 +40,41 @@ typedef struct{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+const float reference_pressure = 101325; // [Pa] Static pressure at b=0 level
+const float reference_altitude = 0; // [m] height at bottom of layer b
+
+const float temperature_static = 288.15; // [K] static temperature at b=0 level
+const float lapse_rate_static = -0.0065; // [K/m]  standard temperature laspe rate (K/m) in International Standard Atmosphere
+const float UNIVERSAL_GAS_CONST = 8.3144598; // [J/mol/K] universal gas constant
+const float GRAVITATIONAL_CONST = 9.80665; // [m/s^2] acceleration due to gravity
+const float MOLAR_MASS_AIR = 0.0289644; // [kg/mol] molar mass of Earth's air
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  Task to test altimeter readings
+//  Display altitude reading continuously to UART output.
+//    - initializes & configures sensor
+//    - read data & calculate altitude
+//    - print to UART screen
 //
 // Returns:
-//  Enter description of return values (if any).
+//  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void vTask_altimeter(void *pvParameters);
 
-//Wrapper functions for read and write
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Calculate altitude from pressure reading
+//
+// Parameters:
+//  Pressure - [Pa]
+//
+// Returns:
+//  float - float value of altitude approximation
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+double altitude_approx(float pressure, float temperature);
 
-void delay(uint32_t period);
-
-void vTask_sensorAG(void *param);
-
-//configuration functions for accelerometer and gyroscope
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-
-#endif // SENSOR_AG_H
+#endif // TEMPLATE_H

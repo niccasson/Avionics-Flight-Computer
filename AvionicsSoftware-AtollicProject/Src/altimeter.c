@@ -1,58 +1,33 @@
-#ifndef SENSOR_AG_H
-#define SENSOR_AG_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  UMSATS > Avionics 2019
 //
 // File Description:
-//  Reads sensor data for accelerometer and gyroscope from the BMI088
+//  Altimeter readings interface
 //
 // History
-// 2019-03-29 by Benjamin Zacharias
+// 2019-04-01 by Eric Kapilik
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmi08x.h"
-#include "bmi088.h"
-#include "SPI.h"
-#include "cmsis_os.h"
-#include "hardwareDefs.h"
-#include "configuration.h"
+#include <altimeter.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+static char buf[128];
+static UART_HandleTypeDef* uart;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// STRUCTS AND STRUCT TYPEDEFS
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//Groups both sensor readings and a time stamp.
-typedef struct {
-
-	struct bmi08x_sensor_data	data_acc;
-	struct bmi08x_sensor_data	data_gyro;
-	uint32_t time_ticks;	//time of sensor reading in ticks.
-}imu_data_struct;
-
-//Parameters for vTask_sensorAG.
-typedef struct{
-
-	UART_HandleTypeDef * huart;
-	QueueHandle_t imu_queue;
-
-} ImuTaskStruct;
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -60,26 +35,47 @@ typedef struct{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// STRUCTS AND STRUCT TYPEDEFS
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// TYPEDEFS
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Enter description for public function here.
-//
-// Returns:
-//  Enter description of return values (if any).
+// FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//Wrapper functions for read and write
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+double altitude_approx(float pressure, float temperature){
+	double const_exp_term = exp(- (UNIVERSAL_GAS_CONST * lapse_rate_static) / (GRAVITATIONAL_CONST * MOLAR_MASS_AIR));
+	double temp_term = temperature / lapse_rate_static;
+	double press_term = (pressure / reference_pressure) * const_exp_term - 1;
+	return (temp_term * press_term) + reference_altitude;
+}
 
-void delay(uint32_t period);
+void vTask_altimeter(void *pvParameters){
+	int rslt;
 
-void vTask_sensorAG(void *param);
+    uart = (UART_HandleTypeDef*) pvParameters; //Get uart for printing to console
 
-//configuration functions for accelerometer and gyroscope
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+	bmp280_sensor* bmp280 = malloc(sizeof(bmp280_sensor));
+	rslt = init_bmp280_sensor(bmp280);
 
-#endif // SENSOR_AG_H
+    uint32_t temp32;
+    uint32_t pres32;
+    float altitude;
+
+    while(1){
+    	pres32 = bmp280_get_press(bmp280);
+    	temp32 = bmp280_get_temp(bmp280);
+    	altitude = altitude_approx((float) pres32, (float) temp32);
+
+    	sprintf(buf, "Pressure: %ld [Pa]\tTemperature: %ld [0.01 C]\tAltitude: %f [m]", pres32, temp32, altitude);
+    	transmit_line(uart, buf);
+    	vTaskDelay((TickType_t) 1000);
+    }
+}

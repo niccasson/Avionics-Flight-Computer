@@ -1,32 +1,32 @@
-#ifndef SENSOR_AG_H
-#define SENSOR_AG_H
+#ifndef PRESSURE_SENSOR_BMP280_H
+#define PRESSURE_SENSOR_BMP280_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// pressure_sensor_bmp280.h
 // UMSATS 2018-2020
 //
 // Repository:
-//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  UMSATS > Avionics 2019
 //
 // File Description:
-//  Reads sensor data for accelerometer and gyroscope from the BMI088
+//  Control and usage of BMP280 sensor inside of RTOS task.
 //
 // History
-// 2019-03-29 by Benjamin Zacharias
+// 2019-03-04 Eric Kapilik
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmi08x.h"
-#include "bmi088.h"
+#include "bmp280.h"
+#include "stm32f4xx_hal_uart_io.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "SPI.h"
-#include "cmsis_os.h"
-#include "hardwareDefs.h"
-#include "configuration.h"
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#define TIMEOUT 100 // milliseconds
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -35,22 +35,12 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//Groups both sensor readings and a time stamp.
-typedef struct {
-
-	struct bmi08x_sensor_data	data_acc;
-	struct bmi08x_sensor_data	data_gyro;
-	uint32_t time_ticks;	//time of sensor reading in ticks.
-}imu_data_struct;
-
-//Parameters for vTask_sensorAG.
-typedef struct{
-
-	UART_HandleTypeDef * huart;
-	QueueHandle_t imu_queue;
-
-} ImuTaskStruct;
+// Keep SPI connection and BMP sensor struct togehter
+struct bmp280_sensor_struct{
+	struct bmp280_dev* bmp_ptr;
+	SPI_HandleTypeDef* hspi_ptr;
+};
+typedef struct bmp280_sensor_struct bmp280_sensor;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -64,22 +54,46 @@ typedef struct{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  Task for testing the BMP280 sensor.
+//    - initializes sensor
+//    - read data & print to UART screen cycle
 //
 // Returns:
-//  Enter description of return values (if any).
+//  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void vTask_pressure_sensor_280(void *pvParameters);
 
-//Wrapper functions for read and write
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Initialize BMP280 sensor and be ready to read via SPI 4w.
+//  Also performs unit self test.
+// *Based off of https://github.com/BoschSensortec/BMP280_driver/blob/master/examples/basic.c
+//
+// Returns:
+//  0 if no errors.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+int8_t init_bmp280_sensor(bmp280_sensor* bmp280_sensor_ptr);
 
-void delay(uint32_t period);
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Captures pressure reading (32 bit precision) from BMP280 sensor.
+// NOTE:
+//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
+//
+// Returns:
+//  uint32_t - 32 bit precision pressure measurement
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+uint32_t bmp280_get_press();
 
-void vTask_sensorAG(void *param);
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Captures temperature reading (32 bit precision) from BMP280 sensor.
+// NOTE:
+//  The sensor that this function will get measurements from is the one that was passed in via init_bmp280_sensor
+//
+// Returns:
+//  uint32_t - 32 bit precision temperature measurement
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+int32_t bmp280_get_temp();
 
-//configuration functions for accelerometer and gyroscope
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-
-#endif // SENSOR_AG_H
+#endif // PRESSURE_SENSOR_BMP280_H

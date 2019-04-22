@@ -18,13 +18,19 @@
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#include "flash.h"
-#include "main.h"
+#include <string.h> 				// For memcpy
+#include "cmsis_os.h"				//For delay and queues
+#include "flash.h"					//For flash memory functions
+#include "pressure_sensor_bmp3.h"	//For bmp reading struct
+#include "sensorAG.h"				//For imu_reading struct
+#include "configuration.h"
+
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define DATA_BUFFER_SIZE			256	//Matches flash memory page size.
-#define TIME_RESOLUTION		10		//In ms.
+#define DATA_BUFFER_SIZE	256			//Matches flash memory page size.
+#define TIME_RESOLUTION		DATA_RATE
 #define ACC_TYPE 			0x8000
 #define GYRO_TYPE			0x4000
 #define PRES_TYPE			0x2000
@@ -36,11 +42,16 @@
 #define	TEMP_LENGTH	3		//Length of a temperature measurement in bytes.
 
 
-
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+typedef enum{
+
+	BUFFER_A = 0,
+	BUFFER_B = 1
+
+} BufferSelection_t;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
@@ -49,6 +60,7 @@
 typedef struct{
 
 	FlashStruct_t * flash_ptr;
+	UART_HandleTypeDef * uart;
 
 	//Queues
 	QueueHandle_t IMU_data_queue;	//For holding accelerometer and gyroscope readings.
@@ -56,16 +68,10 @@ typedef struct{
 
 }LoggingStruct_t;
 
-typedef union{
 
-	struct{
+typedef struct{
 
-		uint16_t header;				//First four bits are the measurement type.// rest are time stamp in ticks. This is being stored in the flash LSB first (should change?)
-		uint8_t data[18];			//Will be of format acc,gyro,pres,temp or acc,gyro. Acc and Gyro will be x,y,z.
-
-	} format;
-
-	uint8_t bytes[20];
+			uint8_t  data[20];
 
 }Measurement_t;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -92,4 +98,4 @@ typedef union{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 void loggingTask(void * params);
 
-#endif // TEMPLATE_H
+#endif // DATA_LOGGING_H

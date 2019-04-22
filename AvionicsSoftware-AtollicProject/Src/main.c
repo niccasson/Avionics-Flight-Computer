@@ -19,17 +19,24 @@
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
+
 SPI_HandleTypeDef flash_spi;
+FlashStruct_t flash;
 ImuTaskStruct imuTaskParams ;
 LoggingStruct_t logParams;
+PressureTaskParams bmp388Params;
+xtractParams xtractParameters;
 
+
+startParams tasks;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void StartDefaultTask(void const * argument);
-void testFlash();
+void testFlash(FlashStruct_t * flash);
 void testpress();
 void testIMU();
 void MX_GPIO_Init();
+void vTask_starter(void * pvParams);
 
 int main(void)
 {
@@ -44,18 +51,23 @@ int main(void)
   MX_GPIO_Init(); //GPIO MUST be firstly initialized
 
   MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
-  transmit_line(&huart6_ptr,"UmSAts FliGTH coMpUTeR");
+  transmit_line(&huart6_ptr,"UMSATS ROCKETRY FLIGHT COMPUTER");
 
 
-
-
-  QueueHandle_t imuQueue_h = xQueueCreate(3,sizeof(imu_data_struct));
-
+  QueueHandle_t imuQueue_h = xQueueCreate(10,sizeof(imu_data_struct));
   if(imuQueue_h == NULL){
 	  while(1);
   }
 
-  FlashStruct_t flash;
+  QueueHandle_t bmpQueue_h = xQueueCreate(10,sizeof(bmp_data_struct));
+  if(bmpQueue_h == NULL){
+	  while(1);
+  }
+
+  //For debugging in Atollic.
+//  vQueueAddToRegistry(imuQueue_h,"imu");
+//  vQueueAddToRegistry(bmpQueue_h,"bmp");
+
   flash.hspi = flash_spi;
 
   FlashStatus_t flash_stat =initialize_flash(&flash);
@@ -65,25 +77,41 @@ int main(void)
 
   logParams.flash_ptr = &flash;
   logParams.IMU_data_queue = imuQueue_h;
+  logParams.PRES_data_queue= bmpQueue_h;
+  logParams.uart = &huart6_ptr;
+
+  bmp388Params.huart = &huart6_ptr;
+  bmp388Params.bmp388_queue =bmpQueue_h;
 
   imuTaskParams.huart = &huart6_ptr;
   imuTaskParams.imu_queue = imuQueue_h;
 
-  xtractParams xtractParameters;
+  //xtractParams xtractParameters;
   xtractParameters.flash = &flash;
-  xtractParameters.uart = &huart6_ptr;
+  xtractParameters.huart = &huart6_ptr;
+
+	tasks.loggingTask_h = NULL;
+	tasks.bmpTask_h = NULL;
+	tasks.imuTask_h = NULL;
+	tasks.xtractTask_h = NULL;
+
+	tasks.flash_ptr = &flash;
+	tasks.huart_ptr = &huart6_ptr;
+
 
   //testIMU();
   //testpress();
-  //testFlash();
+  // testFlash(&flash);
 
   //Timer_GPIO_Init(); //GPIO MUST be firstly initialized
- // MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
+  // MX_HAL_UART2_Init(&huart2_ptr); //UART uses GPIO pin 2 & 3
+
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
 
   //if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
   //      		  	"timer", /* Text name for the task. This is only to facilitate debugging */
@@ -95,36 +123,64 @@ int main(void)
   //  	  Error_Handler();
   //    }
 //
-//  if(xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
-//          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
-//          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-//      				 (void*) &imuTaskParams,	/* pointer to the huart object */
-//      				 2,			 /* This task will run at priorirt 2. */
-//      				 NULL		 /* This example does not use the task handle. */
-//            	  	  ) == 1){
-//      	  Error_Handler();
-//        }
-//
-//  if(xTaskCreate(	loggingTask, 	 /* Pointer to the function that implements the task */
-//          		  	"Logging task", /* Text name for the task. This is only to facilitate debugging */
-//          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-//      				 (void*) &logParams,	/* pointer to the huart object */
-//      				 2,			 /* This task will run at priorirt 2. */
-//      				 NULL		 /* This example does not use the task handle. */
-//            	  	  ) == 1){
-//      	  Error_Handler();
-//        }
+if( xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
+          		  	"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
+          		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+      				 (void*) &imuTaskParams,	/* pointer to the huart object */
+      				 2,			 /* This task will run at priorirt 2. */
+      				 &tasks.imuTask_h		 /* This example does not use the task handle. */
+            	  	  ) !=1){
+
+	 Error_Handler();
+}
+
+
+  if(xTaskCreate(	loggingTask, 	 /* Pointer to the function that implements the task */
+          		  	"Logging task", /* Text name for the task. This is only to facilitate debugging */
+          		  	 2000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+      				 (void*) &logParams,	/* pointer to the huart object */
+      				 2,			 /* This task will run at priorirt 2. */
+      				 &tasks.loggingTask_h	 /* This example does not use the task handle. */
+            	  	  ) != 1){
+      	  Error_Handler();
+        }
   if(xTaskCreate(	vTask_xtract, 	 /* Pointer to the function that implements the task */
     		  	"xtract uart cli", /* Text name for the task. This is only to facilitate debugging */
     		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
 				 (void*) &xtractParameters,	/* pointer to the huart object */
 				 1,			 /* This task will run at priorirt 1. */
-				 NULL		 /* This example does not use the task handle. */
+				 &tasks.xtractTask_h		 /* This example does not use the task handle. */
       	  	  ) == -1){
 	  Error_Handler();
   }
 
  
+
+  if(xTaskCreate(	vTask_pressure_sensor_bmp3, 	 /* Pointer to the function that implements the task */
+      		  	"bmp388 pressure sensor", /* Text name for the task. This is only to facilitate debugging */
+      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+  				 (void*) &bmp388Params,	/* function arguments */
+  				 2,			 /* This task will run at priority 1. */
+  				 &tasks.bmpTask_h		 /* This example does not use the task handle. */
+        	  	  ) != 1){
+  	  Error_Handler();
+    }
+
+  if(xTaskCreate(	vTask_starter, 	 /* Pointer to the function that implements the task */
+      		  	"starter task", /* Text name for the task. This is only to facilitate debugging */
+      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+  				 (void*)&tasks,	/* function arguments */
+  				 1,			 /* This task will run at priority 1. */
+  				 NULL		 /* This example does not use the task handle. */
+        	  	  ) == -1){
+  	  Error_Handler();
+    }
+
+  //Start with all tasks suspended except starter task.
+  vTaskSuspend(tasks.xtractTask_h);
+  vTaskSuspend(tasks.imuTask_h);
+  vTaskSuspend(tasks.bmpTask_h);
+  vTaskSuspend(tasks.loggingTask_h);
 
   /* Start scheduler -- comment to not use FreeRTOS */
   osKernelStart();
@@ -134,6 +190,16 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
+
+	  if(HAL_GPIO_ReadPin(USR_PB_PORT,USR_PB_PIN)){
+
+		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	  }
+	  else{
+
+		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
+	  }
+
 
   }
 }
@@ -181,85 +247,8 @@ void SystemClock_Config(void)
   }
 }
 
-void testFlash(){
 
-	  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
-	  FlashStruct_t flash;
-	  flash.hspi = flash_spi;
 
-	  FlashStatus_t stat = initialize_flash(&flash);
-
-	  if(stat == FLASH_OK){
-
-		  transmit_line(&huart6_ptr,"SPI INIT good!");
-		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
-	  }
-	  else{
-
-		  transmit_line(&huart6_ptr,"SPI INIT FAILED.");
-	  }
-
-//	  uint8_t dataTX[256] ;
-//	  uint8_t dataRX[256];
-//
-//	  int i;
-//	  for(i=0;i<256;i++){
-//
-//		  dataTX[i] = i;
-//		  dataRX[i] = 0;
-//	  }
-//
-//	  stat = program_page(&flash,0x00001000,dataTX,256);
-//
-//	  while(stat != FLASH_OK && stat!=FLASH_ERROR){
-//		  stat = program_page(&flash,0x00001000,dataTX,256);	//Make sure program is actually done.
-//	  }
-//
-//	  HAL_Delay(10);
-//
-//	  stat = read_page(&flash,0x00001000,dataRX,256);
-//
-////	  if(dataRX[0] == dataTX[0]){
-////
-////		  transmit_line(&huart6_ptr,"SPI read successful.");
-////		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
-////	  }
-//	  uint8_t good= 0xFF;
-//	  for(i=0;i<256;i++){
-//
-//		  if(dataTX[i] != dataRX[i]){
-//			  good --;
-//		  }
-//	  }
-//
-//	  if(good == 0xFF){
-//		  		  transmit_line(&huart6_ptr,"SPI read successful.");
-//		  		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
-//
-//	  }
-//	  volatile int count = 0;
-//	  stat = erase_sector(&flash,0x00001000);
-//	  uint8_t stat_reg = 0xFF;
-//	  while(IS_DEVICE_BUSY(stat_reg)){
-//		  stat_reg = get_status_reg(&flash);
-//		  count++;
-//		  HAL_Delay(1);
-//	  }
-
-	  	  //erase_device(&flash);
-//	  	  uint8_t stat_reg = 0xFF;
-//	  	  while(IS_DEVICE_BUSY(stat_reg)){
-//	  		  stat_reg = get_status_reg(&flash);
-//	  		  count++;
-//	  		  HAL_Delay(1);
-//	  	  }
-//
-//	  read_page(&flash,0x00001000,dataRX,256);
-//	  if(dataRX[128] == 0xFF){
-//
-//		  transmit_line(&huart6_ptr,"Flash Erased Success!");
-//	  }
-}
 
 
 
@@ -322,6 +311,7 @@ void testIMU(){
 
 
 
+
 void MX_GPIO_Init(void)
 {
 		  /* GPIO Ports Clock Enable */
@@ -333,13 +323,19 @@ void MX_GPIO_Init(void)
 		  GPIO_InitStruct.Pin       = USR_LED_PIN;
 		  GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
 		  HAL_GPIO_Init(USR_LED_PORT,&GPIO_InitStruct);
+
+		  GPIO_InitTypeDef GPIO_InitStruct2;
+
+		  GPIO_InitStruct2.Pin = USR_PB_PIN;
+		  GPIO_InitStruct2.Mode = GPIO_MODE_INPUT;
+		  GPIO_InitStruct2.Pull = GPIO_PULLUP;
+		  HAL_GPIO_Init(USR_PB_PORT,&GPIO_InitStruct2);
+
 }
 
 
 void StartDefaultTask(void const * argument)
 {
-
-
   for(;;)
   {
 
@@ -375,7 +371,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* User can add his own implementation to report the HAL error return state */
-
+//while(1);
 }
 
 #ifdef  USE_FULL_ASSERT

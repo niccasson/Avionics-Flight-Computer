@@ -1,28 +1,28 @@
-#ifndef SENSOR_AG_H
-#define SENSOR_AG_H
+#ifndef STARTUP_TASK_H
+#define STARTUP_TASK_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  ?Not this:UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
+//  UMSATS/Avionics-2019
 //
 // File Description:
-//  Reads sensor data for accelerometer and gyroscope from the BMI088
+//  Header file for the startup task. This task is the first to run.
 //
 // History
-// 2019-03-29 by Benjamin Zacharias
+// 2019-04-19 by Joseph Howarth
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmi08x.h"
-#include "bmi088.h"
-#include "SPI.h"
+
 #include "cmsis_os.h"
-#include "hardwareDefs.h"
 #include "configuration.h"
+#include "flash.h"
+#include "stm32f4xx_hal_uart_io.h"
+#include "hardwareDefs.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -36,21 +36,17 @@
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//Groups both sensor readings and a time stamp.
-typedef struct {
-
-	struct bmi08x_sensor_data	data_acc;
-	struct bmi08x_sensor_data	data_gyro;
-	uint32_t time_ticks;	//time of sensor reading in ticks.
-}imu_data_struct;
-
-//Parameters for vTask_sensorAG.
 typedef struct{
 
-	UART_HandleTypeDef * huart;
-	QueueHandle_t imu_queue;
+	  TaskHandle_t loggingTask_h ;
+	  TaskHandle_t bmpTask_h ;
+	  TaskHandle_t imuTask_h ;
+	  TaskHandle_t xtractTask_h;
 
-} ImuTaskStruct;
+	  FlashStruct_t * flash_ptr;
+	  UART_HandleTypeDef * huart_ptr;
+
+}startParams;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -59,27 +55,25 @@ typedef struct{
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  This function will be the first task to run when the flight computer is powered on.
+//
+//As of right now, if S2 is not pressed the task will wait for an amount of time specified in the configuration
+//	header file, and will then erase the flash memory and start the IMU, BMP and data logging
+//	tasks.
+//
+//	If S2 is pressed then the xtract task will be started.
+//
+//	Should be passed a populated startParams struct as the parameter.
 //
 // Returns:
-//  Enter description of return values (if any).
+//
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void vTask_starter(void * pvParams);
 
-//Wrapper functions for read and write
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-
-void delay(uint32_t period);
-
-void vTask_sensorAG(void *param);
-
-//configuration functions for accelerometer and gyroscope
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-
-#endif // SENSOR_AG_H
+#endif // TEMPLATE_H
