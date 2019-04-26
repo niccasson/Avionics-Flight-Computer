@@ -24,6 +24,30 @@ To run the project:
       
   5. Debug the project by clicking 'Debug'.      
       
+# Operations
+
+The software in the AvionicsSoftware-AtollicProject folder is meant to be run on the UMSTAS student designed flight computer.
+Instructions for uploading the software to the flight computer can be found on google drive: 
+
+UMSATS/Rocket/2-Avionics/Avionics Setup and Use Guide
 
 
+UMSATS Flight Computer Prototype:
+
+<img src="https://i.imgur.com/smPBZTm.jpg" width="500">
+
+
+When powered on the flight computer will start a 1 hour countdown.  
+The user LED will toggle every 2 seconds until the halfway point, when it will start to toggle every second. When 3/4 of the time has passed, te LED will toggle every 0.5 seconds.
+
+This time can be changed in the configuration.h file.
+
+**After the time has elapsed, the flash memory will be erased** and the flight computer will start recording data at a rate of 10/20 Hz (BMP/IMU). 
+The data rate can be changed in the configuration file.
+The flight computer will record data until the flash memory is full or power is removed.
+
+To recover data from the flight computer, power it on while pressing the S2 button. This will start recovery mode.
+In recovery mode, an inteface will be provided over UART, allowing the data to be read.
+
+---
 Information about UMSATS and our new rocketry division can be found at: http://www.umsats.ca/rocketry/

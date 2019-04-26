@@ -1,41 +1,81 @@
-#ifndef STM32F4XX_HAL_UART_CLI_H
-#define STM32F4XX_HAL_UART_CLI_H
+#ifndef FLASH_H
+#define FLASH_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS>Avionics-2019
+//  UMSATS/Avionics-2019
 //
 // File Description:
-//  Header file for communicating with STM32 microchip via UART Serial Connection. Handles initialization and transmission/reception.
+//  Header file for the flash memory interface.
 //
 // History
-// 2019-02-13 Eric Kapilik
+// 2019-03-28 by Joseph Howarth
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_uart.h"
-#include "stm32f4xx_hal_conf.h"
+
 #include "hardwareDefs.h"
+#include "stm32f4xx_hal.h"
+#include "SPI.h"
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define TIMEOUT_MAX 0xFFFF
-#define BUFFER_SIZE 2048
+
+//Commands
+
+#define		READ_ID_COMMAND			0x9F
+#define 	WE_COMMAND				0x06		//Write Enable
+#define		PP_COMMAND				0x02		//Page Program Command (write)
+#define		READ_COMMAND			0x03
+#define 	ERASE_SEC_COMMAND		0xD8
+#define		GET_STATUS_REG_COMMAND	0x05
+#define		BULK_ERASE_COMMAND		0x60		//Command to erase the whole device.
+
+//Constants
+#define		MANUFACTURER_ID			0x01
+#define		DEVICE_ID_MSB			0x02
+#define		DEVICE_ID_LSB			0x16
+
+#define 	HIGH_BYTE_MASK_24B		0x00FF0000
+#define		MID_BYTE_MASK_24B		0x0000FF00
+#define 	LOW_BYTE_MASK_24B		0x000000FF
+
+#define 	FLASH_START_ADDRESS		0x00000000
+#define		FLASH_SIZE_BYTES		8000000
+
+//Status Reg. Bits
+#define 	P_ERR_BIT				0x06		//Programming Error Bit.
+#define		E_ERR_BIT				0x05		//Erase Error Bit.
+#define		WEL_BIT					0x01		//Write Enable Latch Bit.
+#define		WIP_BIT					0x00		//Write In Progress Bit.
+
+//Macros
+#define		WAS_PROGRAMING_ERROR(x)	((x >> P_ERR_BIT) & 0x01)
+#define		WAS_ERASE_ERROR(x)		((x >> E_ERR_BIT) & 0x01)
+#define		IS_WRITE_ENABLE(x)		((x >> WEL_BIT) & 0x01)
+#define		IS_DEVICE_BUSY(x)		((x >> WIP_BIT) & 0x01)
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+typedef enum {FLASH_ERROR,FLASH_OK,FLASH_BUSY} FlashStatus_t;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+typedef struct {
+
+	SPI_HandleTypeDef hspi;
+
+
+} FlashStruct_t;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -44,93 +84,91 @@
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//	For UART port 2 only, this should only be run ONCE. (i.e. only one program should call it, once.)
-//  Enable UART clock, initialize GPIO pins, and create UART structure required for communication.
-//	Uses GPIO pins 2 & 3 of STM32F401RE
-//
-// NOTE: If you wish to use another UART port, please create another function to initialize that port.
-//
-// Parameters:
-//  UART_HandleTypeDef Pointer (needed by communication functions)
+//  This function sets up the flash memory.
+//  Right now, this consists of setting up the SPI interface and
+//	checking the ID of the flash. We could also check to make sure memory is not full etc.
 //
 // Returns:
-//  VOID
+//  Returns FLASH_OK if the setup is successful, HAL_ERROR otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MX_HAL_UART2_Init(UART_HandleTypeDef* uart);
+FlashStatus_t		initialize_flash(FlashStruct_t * flash);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//	For UART port 6 only, this should only be run ONCE. (i.e. only one program should call it, once.)
-//  Enable UART clock, initialize GPIO pins, and create UART structure required for communication.
-//
-// NOTE: If you wish to use another UART port, please create another function to initialize that port.
-//
-// Parameters:
-//  UART_HandleTypeDef Pointer (needed by communication functions)
+//  This function reads the manufacturer and device IDs of the flash memory.
+//	The values are checked against the correct values.
 //
 // Returns:
-//  VOID
+//  Returns FLASH_OK if the IDs match and FLASH_ERROR if they do not match.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MX_HAL_UART6_Init(UART_HandleTypeDef* uart);
+FlashStatus_t		check_flash_id(FlashStruct_t * flash);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  This writes up to 256 bytes (one page) to a specified location in the flash memory.
+//	The address should be 3 bytes long (0x000000 to 0x7FFFFF).
+//	If the LSB of the address is not all 0, then data written past the page will wrap around!
+//
+//	If the device is busy the function exits early and returns FLASH_BUSY.
+//
+// Returns:
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+FlashStatus_t	program_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Transmit message to UART port. Does not add new line to message.
+//  This reads from a specified location in the flash memory.
+//	The whole memory array may be read using a single read command.
 //
-// Parameters:
-//  UART_HandleTypeDef* uart - UART port to transmit to
-//  char* message - the message you wish to send, ending string with null character ('\0')
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  VOID
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void transmit(UART_HandleTypeDef* uart, char* message);
+FlashStatus_t 	read_page(FlashStruct_t * flash,uint32_t address,uint8_t * data_buffer,uint16_t num_bytes);
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Transmit message to UART port. Adds new line characters to end of message.
+//  This erases a specified sector(64 kb) in the flash memory. Will take up to 2 seconds.
+//	The address can be any address in the desired sector.
 //
-// Parameters:
-//  UART_HandleTypeDef* uart - UART port to transmit to
-//  char* message - the message you wish to send, ending string with null character ('\0')
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  VOID
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void transmit_line(UART_HandleTypeDef* uart, char* message);
+FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Transmit bytes to UART port.
+//  This erases the whole flash memory. Will take up to 128 seconds.
 //
-// Parameters:
-//  UART_HandleTypeDef* uart - UART port to transmit to
-//  uint8_t* bytes - A pointer to the bytes you want to send.
+//	If the device is busy the function exits early and returns FLASH_BUSY.
 //
 // Returns:
-//  VOID
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void transmit_bytes(UART_HandleTypeDef* uart, uint8_t *bytes, uint16_t numBytes);
+FlashStatus_t 	erase_device(FlashStruct_t * flash);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//	BLOCKING FUNCTION
-//  Receive message from UART port. Prints back what the user is typing so that they can see it. Their message ends when they press enter.
+//  This returns the status register of teh flash.
 //
-// Parameters:
-//  UART_HandleTypeDef* uart - UART port to transmit to
 //
 // Returns:
-//  Pointer to character array containing user entered message
+//  The status register value (8 bits).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-char* receive_command(UART_HandleTypeDef* uart);
+uint8_t get_status_reg(FlashStruct_t * flash);
 
-#endif //STM32F4XX_HAL_UART_CLI_H
+#endif // TEMPLATE_H
