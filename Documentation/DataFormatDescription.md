@@ -17,7 +17,17 @@ The type bits are defined in the data_logging.h header file.
 
 Diagrams below show the meaning of the bytes in each packet.
 
+14 byte packet:
 
+![Imgur](https://i.imgur.com/PKFEK6g.jpg)
+
+20 byte packet:
+
+![Imgur](https://i.imgur.com/xDlkKce.jpg)
+
+Legend:
+
+![Imgur](https://i.imgur.com/HLmTAfb.jpg)
 
 The data is stored in memory starting at address 0. The packets are stored sequentially, and the length of each packet can be found from the data type bits.
 
