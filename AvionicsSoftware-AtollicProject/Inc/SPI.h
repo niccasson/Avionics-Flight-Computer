@@ -27,12 +27,16 @@
 #define SPI2_CS_PIN		PRES_SPI_CS_PIN
 #define SPI2_CS_PORT	PRES_SPI_CS_PORT
 
-//Need to look into how to switch between acc and gyro cs pins.
-#define SPI3_CS_PIN		IMU_SPI_ACC_CS_PIN
-#define SPI3_CS_PORT	IMU_SPI_ACC_CS_PORT
+//Right now the timeout value is used to select between chip selects.
+//We should really find a better way to do this!
+//Currently only works with the send and receive functions.
+//timeout=10 for acc
+//timeout=other for gyro
+#define SPI3_CS1_PIN	IMU_SPI_ACC_CS_PIN
+#define SPI3_CS1_PORT	IMU_SPI_ACC_CS_PORT
 
-
-
+#define SPI3_CS2_PIN	IMU_SPI_GYRO_CS_PIN
+#define SPI3_CS2_PORT	IMU_SPI_GYRO_CS_PORT
 
 // Description:
 //  This function initializes the SPI1 interface.
@@ -98,6 +102,7 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
 //     rx_buffer       A pointer to where the received bytes should be stored
 //     total_size      The number of bytes being sent and received. (# of bytes read + 1)
 //     timeout         The timeout value in milliseconds.
+
 void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uint16_t total_size, uint32_t timeout);
 
 

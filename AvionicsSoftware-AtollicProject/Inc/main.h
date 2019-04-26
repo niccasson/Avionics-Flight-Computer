@@ -58,14 +58,19 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "cmsis_os.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_uart_io.h"
 #include "SPI.h"
-
+#include <string.h>
+#include "flash.h"
+#include "dataLogging.h"
 #include "xtract.h"
-
-
-
+//#include "timer.h"
+#include "sensorAG.h"
+//#include "pressure_sensor_bmp280.h"
+#include "pressure_sensor_bmp3.h"
+#include "startupTask.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
