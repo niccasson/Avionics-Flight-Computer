@@ -1,117 +1,29 @@
-#ifndef HARDWARE_DEF_H
-#define HARDWARE_DEF_H	
+#ifndef ALTIMETER_H
+#define ALTIMETER_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS 2018-2020
 //
 // Repository:
-//  UMSATS/Avionics/2019
+//  UMSATS Google Drive: UMSATS/Guides and HowTos.../Command and Data Handling (CDH)/Coding Standards
 //
 // File Description:
-//  Definitions for all the pins and other hardware constants for the prototype flight computer
+//  Template header file for C / C++ projects. Unused sections can be deleted.
 //
 // History
-// 2019-03-27 by Joseph Howarth
+// 2019-01-13 by Tamkin Rahman
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include "FreeRTOS.h"
+#include "task.h"
+#include "pressure_sensor_bmp280.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//User LED(red)
-#define USR_LED_PIN				GPIO_PIN_5
-#define USR_LED_PORT			GPIOB
-
-//User Pushbutton (S1)
-#define USR_PB_PIN				GPIO_PIN_1
-#define USR_PB_PORT				GPIOB
-
-
-//User GPIO
-#define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.
-#define USR_GPIO_P3_4_PORT		GPIOC
-
-#define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
-#define USR_GPIO_P3_3_PORT		GPIOC
-
-//UART 6
-#define UART_TX_PIN				GPIO_PIN_11
-#define UART_TX_PORT			GPIOA
-
-#define UART_RX_PIN				GPIO_PIN_12
-#define UART_RX_PORT			GPIOA
-
-//Flash Memory on SPI1
-
-#define FLASH_SPI_PORT			GPIOA
-
-#define FLASH_SPI_SCK_PIN		GPIO_PIN_5
-#define FLASH_SPI_MISO_PIN		GPIO_PIN_6
-#define FLASH_SPI_MOSI_PIN		GPIO_PIN_7
-
-#define FLASH_SPI_CS_PIN		GPIO_PIN_5
-#define FLASH_SPI_CS_PORT		GPIOC
-
-#define FLASH_WP_PIN			GPIO_PIN_0
-#define FLASH_WP_PORT			GPIOB
-
-#define	FLASH_HOLD_PIN			GPIO_PIN_4
-#define FLASH_HOLD_PORT			GPIOC
-
-
-
-//Pressure Sensor on SPI2
-
-#define PRES_SPI_PORT			GPIOB
-
-#define PRES_SPI_SCK_PIN		GPIO_PIN_13
-#define PRES_SPI_MISO_PIN		GPIO_PIN_14
-#define PRES_SPI_MOSI_PIN		GPIO_PIN_15
-
-#define PRES_SPI_CS_PIN			GPIO_PIN_7
-#define PRES_SPI_CS_PORT		GPIOC
-
-#define	PRES_INT_PIN			GPIO_PIN_6
-#define PRES_INT_PORT			GPIOC
-
-
-
-//IMU on SPI3
-
-#define IMU_SPI_PORT			GPIOC
-
-#define IMU_SPI_SCK_PIN			GPIO_PIN_10
-#define IMU_SPI_MISO_PIN		GPIO_PIN_11
-#define IMU_SPI_MOSI_PIN		GPIO_PIN_12
-
-#define IMU_SPI_ACC_CS_PIN  	GPIO_PIN_9
-#define IMU_SPI_ACC_CS_PORT 	GPIOB
-
-#define IMU_SPI_GYRO_CS_PIN  	GPIO_PIN_6
-#define IMU_SPI_GYRO_CS_PORT 	GPIOB
-
-#define IMU_ACC_INT_PIN  		GPIO_PIN_7
-#define IMU_ACC_INT_PORT 		GPIOB
-
-#define IMU_GYRO_INT_PIN  		GPIO_PIN_8
-#define IMU_GYRO_INT_PORT 		GPIOB
-
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
-
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
-
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
-
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -128,18 +40,41 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+const float reference_pressure = 101325; // [Pa] Static pressure at b=0 level
+const float reference_altitude = 0; // [m] height at bottom of layer b
 
+const float temperature_static = 288.15; // [K] static temperature at b=0 level
+const float lapse_rate_static = -0.0065; // [K/m]  standard temperature laspe rate (K/m) in International Standard Atmosphere
+const float UNIVERSAL_GAS_CONST = 8.3144598; // [J/mol/K] universal gas constant
+const float GRAVITATIONAL_CONST = 9.80665; // [m/s^2] acceleration due to gravity
+const float MOLAR_MASS_AIR = 0.0289644; // [kg/mol] molar mass of Earth's air
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Enter description for public function here.
+//  Task to test altimeter readings
+//  Display altitude reading continuously to UART output.
+//    - initializes & configures sensor
+//    - read data & calculate altitude
+//    - print to UART screen
 //
 // Returns:
-//  Enter description of return values (if any).
+//  VOID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void vTask_altimeter(void *pvParameters);
 
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Calculate altitude from pressure reading
+//
+// Parameters:
+//  Pressure - [Pa]
+//
+// Returns:
+//  float - float value of altitude approximation
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+double altitude_approx(float pressure, float temperature);
 
 #endif // TEMPLATE_H
