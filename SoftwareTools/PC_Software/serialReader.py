@@ -6,7 +6,7 @@ import sys
 
 mutex = threading.Lock()
 
-def serialFunc(lock,baud_rate,com_port,log_file_name):
+def serialFunc(lock,serial_obj):
     '''
 
     This function reads from the specified serial port.
@@ -23,7 +23,7 @@ def serialFunc(lock,baud_rate,com_port,log_file_name):
 
     '''
 
-    serial_obj = SerialFunctions(baud_rate, com_port, log_file_name)
+
 
     # This line is inserted as the first line in the log. Doesn't really matter what it is,
     # the formater C program expects to skip the first two lines. The second line to skip is
@@ -69,9 +69,10 @@ def run(num_args,com,baudRate,outName):
             ''')
         sys.exit()
 
+    S = SerialFunctions(baudRate, com, outName)
+
     serialThread = threading.Thread(group=None, target=serialFunc,
-                                    kwargs={'lock': mutex, 'baud_rate': baudRate, 'com_port': com,
-                                            'log_file_name': outName}, name="serialThread")
+                                    kwargs={'lock': mutex, 'serial_obj': S}, name="serialThread")
 
     mutex.acquire()
 
@@ -92,4 +93,4 @@ def run(num_args,com,baudRate,outName):
 if __name__ == "__main__":
 
 
-    run(len(sys.args),sys.args[1],sys.args[2],sys.args[3])
+    run(len(sys.argv),sys.argv[1],sys.argv[2],sys.argv[3])

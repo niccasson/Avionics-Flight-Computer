@@ -24,14 +24,18 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
 
-    from . import ctrl
-    app.register_blueprint(ctrl.bp)
-    app.add_url_rule('/', endpoint='interface')
 
+    from . import dashboard
+    app.register_blueprint(dashboard.bp)
+
+    from . import configure
+    app.register_blueprint(configure.bp)
+
+    from . import download
+    app.register_blueprint(download.bp)
+
+    from . import visualize
+    app.register_blueprint(visualize.bp)
 
     return app

@@ -45,3 +45,16 @@ class SerialFunctions:
         self.s.close()
 
 
+def list_COM_ports():
+    """
+    This function lists all available com ports and returns a list of the names.
+    return: a list containing the name of each port as a string.
+    """
+    COMports = []
+    portInfoLists = list_ports.comports()
+
+    for port in portInfoLists:
+        COMports.append(port.device)
+
+
+    return COMports

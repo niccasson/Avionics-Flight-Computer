@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="terminal_view">
+        <textarea id="term_dsp" rows="10" cols="80"  disabled spellcheck="false" wrap="off"></textarea>
+
+    </div>
+    <div class="terminal_entry">
+        <textarea id="term_entry" rows="1" cols="80"  spellcheck="false" wrap="off" placeholder="Enter commands here!"></textarea>
+    </div>
+
+<hr>
+
+    <div class="serialSettings">
+    <h2>Connect To The Flight Computer</h2>
+        <div style="width: 100%; display: table;">
+
+            <div style="display: table-row;">
+
+                <div style="display: table-cell;">
+
+                    <form  name="comPortList" >
+                        <label>COM Port:</label>
+                        <select id="comPortList">
+                            <option>None available.</option>
+
+                        </select>
+
+                    </form>
+                    <button id="refreshCOM" onclick="getComPorts">Refresh</button>
+                </div>
+
+                <div style="display: table-cell;">
+                    <form  autocomplete="off">
+                        <label>Baudrate:
+                        <input list="baudRates" name="rate" /></label>
+                        <datalist id="baudRate">
+                          <option value="9600">
+                          <option value="115200">
+                        </datalist>
+                    </form></div>
+                </div>
+
+
+
+            </div>
+
+         </div>
+    </div>
+
+    <div class="serialSettings">
+        <form >
+            <input type="button" value="Connect">
+        </form>
+    </div>
+
+    <script src="../static/dashboard_script.js"></script>
+{% endblock %}
