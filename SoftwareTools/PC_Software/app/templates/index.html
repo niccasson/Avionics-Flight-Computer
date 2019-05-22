@@ -15,14 +15,11 @@
 
 <hr>
 
-    <div class="serialSettings">
+    <div class="serialSettings" >
     <h2>Connect To The Flight Computer</h2>
-        <div style="width: 100%; display: table;">
+        <div style="width: 100%;">
 
-            <div style="display: table-row;">
-
-                <div style="display: table-cell;">
-
+                <div style="text-align: center">
                     <form  name="comPortList" >
                         <label>COM Port:</label>
                         <select id="comPortList">
@@ -34,29 +31,27 @@
                     <button id="refreshCOM" onclick="getComPorts">Refresh</button>
                 </div>
 
-                <div style="display: table-cell;">
-                    <form  autocomplete="off">
-                        <label>Baudrate:
-                        <input list="baudRates" name="rate" /></label>
+                <div >
+                    <form  action="javascript:void(-1)" autocomplete="off">
+                        <label>Baudrate:</label>
+                        <input id="baudEntry" list="baudRates"  />
                         <datalist id="baudRate">
                           <option value="9600">
                           <option value="115200">
                         </datalist>
-                    </form></div>
+                    </form>
                 </div>
 
 
-
-            </div>
-
          </div>
-    </div>
-
-    <div class="serialSettings">
-        <form >
-            <input type="button" value="Connect">
+            <form >
+            <input id="ConnectSerialButton"type="button" value="Connect">
         </form>
     </div>
+
+
+
+
 
     <script src="../static/dashboard_script.js"></script>
 {% endblock %}

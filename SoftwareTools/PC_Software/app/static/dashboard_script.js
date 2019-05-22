@@ -1,7 +1,67 @@
 
 document.querySelector(".terminal_entry").addEventListener("keyup",terminalSubmit);
 document.getElementById("refreshCOM").addEventListener("click",getComPorts);
+document.getElementById("ConnectSerialButton").addEventListener("click",connectFunc);
 
+
+function refresh() {
+
+
+    var dsp_txt = document.getElementById("term_dsp");
+              $.ajax({
+            type: 'get',
+            url: '/terminal_in',
+            success: function (data) {
+                console.log(data)
+
+              dsp_txt.value += data;
+
+            }
+          });
+
+    setTimeout(refresh, 2000);
+    // ...
+}
+
+// initial call, or just call refresh directly
+setTimeout(refresh, 2000)
+
+
+function connectFunc(e){
+
+    var comPortList = document.getElementById("comPortList");
+    var comPort =comPortList.options[comPortList.selectedIndex].value;
+
+    var baudRateBox = document.getElementById("baudEntry");
+    var baudRate = baudRateBox.value;
+
+    console.log(comPort);
+    console.log(baudRate);
+
+
+
+    $.ajax({
+        type: 'post',
+        url: '/connect',
+        data: JSON.stringify({"baudrate":baudRate,"COM":comPort}),
+        success: function (data) {
+
+
+
+
+        if(data['res']==0){
+            alert("Failed!");
+        }
+        if(data['res']== 1){
+            var button = document.getElementById("ConnectSerialButton");
+            button.value = "Disconnect";
+            console.log("Connected");
+        }
+
+        }
+    })
+
+}
 
 function terminalSubmit(e){
 console.log("key press");
@@ -17,10 +77,12 @@ console.log("key press");
 
           $.ajax({
             type: 'post',
-            url: '/terminal',
-            data: entry_txt.value,
-            success: function () {
-              alert('form was submitted');
+            url: '/terminal_out',
+            data: JSON.stringify ({'text':entry_txt.value}),
+            success: function (data) {
+
+              dsp_txt.value += data;
+
             }
           });
 
@@ -30,7 +92,7 @@ console.log("key press");
          console.log("Enter pressed");
         // console.log(entry_txt.value);
         // console.log(dsp_txt.value);
-        dsp_txt.value += entry_txt.value;
+
         // console.log(dsp_txt.value);
         entry_txt.value = "";
 
@@ -62,9 +124,9 @@ function post(path, params, method='post') {
 
 function getComPorts(){
 
-              $.ajax({
+    $.ajax({
             type: 'get',
-            url: '/connect',
+            url: '/comports',
 
             success: function (data) {
 
@@ -77,9 +139,13 @@ function getComPorts(){
                     //var radioFormName = document.getElementById("comPortList");
 
                     var comList = document.getElementById("comPortList");
-                    comList.options[0].remove();
+
 
                     var i;
+                    for (option in comList.options){
+                        comList.options.remove(0);
+                    }
+
                     for (i = 0; i < data.length; i++) {
 
                         //create the button

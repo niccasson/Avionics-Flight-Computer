@@ -5,8 +5,9 @@ import sys
 
 
 mutex = threading.Lock()
+buffer = [""]
 
-def serialFunc(lock,serial_obj):
+def serialFunc(lock,serial_obj,buf):
     '''
 
     This function reads from the specified serial port.
@@ -23,8 +24,6 @@ def serialFunc(lock,serial_obj):
 
     '''
 
-
-
     # This line is inserted as the first line in the log. Doesn't really matter what it is,
     # the formater C program expects to skip the first two lines. The second line to skip is
     # sent by the flight computer.
@@ -35,11 +34,13 @@ def serialFunc(lock,serial_obj):
 
     serial_obj.file.write(line_bytes)
 
-    print("Now reading from {} at {} baud.\n Output will be in {}\n".format(com_port,baud_rate,log_file_name))
+    # print("Now reading from {} at {} baud.\n Output will be in {}\n".format(com_port,baud_rate,log_file_name))
 
     while True:
 
-        serial_obj.read()
+        buf[0] = buf[0] + (serial_obj.read()).decode('UTF-8')
+        #print(str(serial_obj.read()))
+        print(buf[0])
         if lock.acquire(False):
             break;
 
@@ -48,6 +49,7 @@ def serialFunc(lock,serial_obj):
 
     serial_obj.s.close()
     print("Closed serial port!\n")
+
 
 def run(num_args,com,baudRate,outName):
 
@@ -72,7 +74,7 @@ def run(num_args,com,baudRate,outName):
     S = SerialFunctions(baudRate, com, outName)
 
     serialThread = threading.Thread(group=None, target=serialFunc,
-                                    kwargs={'lock': mutex, 'serial_obj': S}, name="serialThread")
+                                    kwargs={'lock': mutex, 'serial_obj': S,'buf':buffer}, name="serialThread")
 
     mutex.acquire()
 
@@ -88,6 +90,28 @@ def run(num_args,com,baudRate,outName):
             serialThread.join()
 
             break;
+
+def run(serialObj):
+
+    serialThread = threading.Thread(group=None, target=serialFunc,
+                                    kwargs={'lock': mutex, 'serial_obj': serialObj, 'buf': buffer}, name="serialThread")
+
+    mutex.acquire()
+
+    serialThread.start()
+
+    # while True:
+    #
+    #     a = input("Press q to stop:")
+    #
+    #     if a == 'q':
+    #         mutex.release()
+    #
+    #         serialThread.join()
+    #
+    #         break;
+
+    return serialThread, mutex
 
 
 if __name__ == "__main__":
