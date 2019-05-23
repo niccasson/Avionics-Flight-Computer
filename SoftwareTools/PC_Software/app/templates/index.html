@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+<div>
     <div class="terminal_view">
         <textarea id="term_dsp" rows="10" cols="80"  disabled spellcheck="false" wrap="off"></textarea>
 
@@ -12,7 +13,8 @@
     <div class="terminal_entry">
         <textarea id="term_entry" rows="1" cols="80"  spellcheck="false" wrap="off" placeholder="Enter commands here!"></textarea>
     </div>
-
+    <button id="refreshTerminalBtn">Refresh</button>
+</div>
 <hr>
 
     <div class="serialSettings" >

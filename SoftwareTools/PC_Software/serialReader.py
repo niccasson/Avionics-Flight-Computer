@@ -38,9 +38,13 @@ def serialFunc(lock,serial_obj,buf):
 
     while True:
 
-        buf[0] = buf[0] + (serial_obj.read()).decode('UTF-8')
+        data = (serial_obj.read()).decode('UTF-8')
+        #lock.acquire()
+        buf[0] = buf[0] + data;
+        #lock.release()
+        #print("thread: {}".format(id(buf)))
         #print(str(serial_obj.read()))
-        print(buf[0])
+        #print("thread buff: {}".format(buf[0]))
         if lock.acquire(False):
             break;
 

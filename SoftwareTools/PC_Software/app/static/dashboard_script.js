@@ -2,7 +2,15 @@
 document.querySelector(".terminal_entry").addEventListener("keyup",terminalSubmit);
 document.getElementById("refreshCOM").addEventListener("click",getComPorts);
 document.getElementById("ConnectSerialButton").addEventListener("click",connectFunc);
+document.getElementById("refreshTerminalBtn").addEventListener("click",refreshTerminal);
 
+var serialState  = false;
+
+function refreshTerminal(){
+
+    var dsp = document.getElementById("term_dsp");
+    dsp.value = "";
+}
 
 function refresh() {
 
@@ -12,19 +20,22 @@ function refresh() {
             type: 'get',
             url: '/terminal_in',
             success: function (data) {
+                console.log("refresh")
                 console.log(data)
 
               dsp_txt.value += data;
+              var textarea = document.getElementById('term_dsp');
+              textarea.scrollTop = textarea.scrollHeight;
 
             }
           });
 
-    setTimeout(refresh, 2000);
+    setTimeout(refresh, 500);
     // ...
 }
 
 // initial call, or just call refresh directly
-setTimeout(refresh, 2000)
+setTimeout(refresh, 1000)
 
 
 function connectFunc(e){
@@ -38,29 +49,42 @@ function connectFunc(e){
     console.log(comPort);
     console.log(baudRate);
 
+    if(serialState == false) {
+        serialState = true;
+        $.ajax({
+            type: 'post',
+            url: '/connect',
+            data: JSON.stringify({"baudrate": baudRate, "COM": comPort}),
+            success: function (data) {
 
 
-    $.ajax({
-        type: 'post',
-        url: '/connect',
-        data: JSON.stringify({"baudrate":baudRate,"COM":comPort}),
-        success: function (data) {
+                if (data['res'] == 0) {
+                    alert("Failed!");
+                }
+                if (data['res'] == 1) {
+                    var button = document.getElementById("ConnectSerialButton");
+                    button.value = "Disconnect";
+                    console.log("Connected");
+                }
 
+            }
+        })
+    }
+    else if (serialState == true){
 
+              $.ajax({
+            type: 'get',
+            url: '/disconnect',
+            success: function (data) {
 
+              //dsp_txt.value += data;
+alert("Disconnect");
+            }
+          });
 
-        if(data['res']==0){
-            alert("Failed!");
-        }
-        if(data['res']== 1){
-            var button = document.getElementById("ConnectSerialButton");
-            button.value = "Disconnect";
-            console.log("Connected");
-        }
-
-        }
-    })
-
+              var button = document.getElementById("ConnectSerialButton");
+                    button.value = "Connect";
+    }
 }
 
 function terminalSubmit(e){
@@ -74,14 +98,15 @@ console.log("key press");
      var dsp_txt = document.getElementById("term_dsp");
 
     // post('/',{text: entry_txt.value});
-
+        //SENDING COMMAND TO FLIGHT COMPUTER REQUIRES A \r !!!!!!!
+        var command = (entry_txt.value).replace("\n","") +"\r";
           $.ajax({
             type: 'post',
             url: '/terminal_out',
-            data: JSON.stringify ({'text':entry_txt.value}),
+            data: JSON.stringify ({'text':command}),
             success: function (data) {
 
-              dsp_txt.value += data;
+              //dsp_txt.value += data;
 
             }
           });

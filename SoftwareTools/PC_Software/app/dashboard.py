@@ -26,6 +26,14 @@ def comports():
 
     return jsonify(ports)
 
+@bp.route('/disconnect', methods=(['GET']))
+def disconnect():
+
+    S = app.SerialPort
+    S.close()
+
+    #return jsonify(ports)
+
 @bp.route('/connect', methods=(['GET','POST']))
 def connect():
 
@@ -36,6 +44,7 @@ def connect():
     baud = jsonData["baudrate"]
     com = jsonData["COM"]
     print("com: {}  baud: {}".format(com, baud))
+
     try:
         app.SerialPort = data_reader.SerialFunctions(baud, com, 'log.log')
         serialReader.run(app.SerialPort)
@@ -52,20 +61,25 @@ def connect():
 @bp.route('/terminal_out', methods=(['GET','POST']))
 def terminal_out():
 
+    print("Sending data to flight comp")
     data = request.get_data().decode('utf-8')
 
     cmd = json.loads(str(data))['text']
+    print("Sending: {}".format(cmd))
     S = app.SerialPort
     S.write(cmd)
 
-
-    return jsonify("\n"+cmd)
+    return jsonify(cmd)
 
 
 @bp.route('/terminal_in', methods=(['GET','POST']))
 def terminal_in():
 
+    print("terminal in: {}".format(id(serialReader.buffer)))
+
     text = serialReader.buffer[0]
     serialReader.buffer[0] = ""
-    print(text)
+
+    print("Received data: {}".format(text))
+    print(serialReader.buffer[0])
     return jsonify(text)
