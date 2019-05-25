@@ -4,7 +4,10 @@ document.getElementById("refreshCOM").addEventListener("click",getComPorts);
 document.getElementById("ConnectSerialButton").addEventListener("click",connectFunc);
 document.getElementById("refreshTerminalBtn").addEventListener("click",refreshTerminal);
 
-var serialState  = false;
+
+
+
+getComPorts();
 
 function refreshTerminal(){
 
@@ -35,7 +38,7 @@ function refresh() {
 }
 
 // initial call, or just call refresh directly
-setTimeout(refresh, 1000)
+setTimeout(refresh, 1000);
 
 
 function connectFunc(e){
@@ -49,43 +52,78 @@ function connectFunc(e){
     console.log(comPort);
     console.log(baudRate);
 
-    if(serialState == false) {
-        serialState = true;
-        $.ajax({
-            type: 'post',
-            url: '/connect',
-            data: JSON.stringify({"baudrate": baudRate, "COM": comPort}),
-            success: function (data) {
-
-
-                if (data['res'] == 0) {
-                    alert("Failed!");
-                }
-                if (data['res'] == 1) {
-                    var button = document.getElementById("ConnectSerialButton");
-                    button.value = "Disconnect";
-                    console.log("Connected");
-                }
-
-            }
-        })
-    }
-    else if (serialState == true){
-
-              $.ajax({
+     $.ajax({
             type: 'get',
-            url: '/disconnect',
+            url: '/readGlobal',
             success: function (data) {
+                data = JSON.parse(data);
+                var serialState = data["serialOpen"];
+                console.log(typeof(data));
+                console.log(data);
+                console.log(data.toString());
 
-              //dsp_txt.value += data;
-alert("Disconnect");
-            }
-          });
+                   if(serialState == false) {
+                        // serialState = true;
+                        $.ajax({
+                            type: 'post',
+                            url: '/connect',
+                            data: JSON.stringify({"baudrate": baudRate, "COM": comPort}),
+                            success: function (data) {
 
-              var button = document.getElementById("ConnectSerialButton");
+
+                                if (data['res'] == 0) {
+                                    alert("Failed!");
+                                }
+                                if (data['res'] == 1) {
+                                    var button = document.getElementById("ConnectSerialButton");
+                                    button.value = "Disconnect";
+                                    console.log("Connected");
+
+
+                                    $.ajax({
+                                            type: 'post',
+                                            url: '/writeGlobal',
+                                            data: JSON.stringify({"serialOpen":true}),
+                                            success: function () {
+                                            }
+                                    });
+                                }
+
+                            }
+                        })
+                    }
+                else if (serialState == true){
+
+                    $.ajax({
+                        type: 'get',
+                        url: '/disconnect',
+                        success: function (data) {
+
+                         alert("Disconnect");
+                        }
+                    });
+
+                    var button = document.getElementById("ConnectSerialButton");
                     button.value = "Connect";
-    }
+                    // serialState = false;
+                    $.ajax({
+                        type: 'post',
+                        url: '/writeGlobal',
+                        data: JSON.stringify({"serialOpen":false}),
+                        success: function () {}
+                     });
+                }
+
+
+
+            }
+        });
+
+
+
 }
+
+
 
 function terminalSubmit(e){
 console.log("key press");

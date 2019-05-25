@@ -53,7 +53,7 @@ def serialFunc(lock,serial_obj,buf):
 
     serial_obj.s.close()
     print("Closed serial port!\n")
-
+    lock.release()
 
 def run(num_args,com,baudRate,outName):
 

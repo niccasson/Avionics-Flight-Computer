@@ -30,13 +30,14 @@ def comports():
 def disconnect():
 
     S = app.SerialPort
-    S.close()
+    serialReader.mutex.release()
 
-    #return jsonify(ports)
+
+    return jsonify("Disconnected")
 
 @bp.route('/connect', methods=(['GET','POST']))
 def connect():
-
+    print("CONNECTING")
     data = request.get_data().decode('utf-8')
 
     jsonData = json.loads(str(data))
@@ -47,6 +48,7 @@ def connect():
 
     try:
         app.SerialPort = data_reader.SerialFunctions(baud, com, 'log.log')
+        print("starting thread")
         serialReader.run(app.SerialPort)
 
     except:
@@ -54,8 +56,7 @@ def connect():
         print(sys.exc_info()[0])
         return jsonify({'res': 0})
 
-
-
+    print("RESPONDING")
     return jsonify({'res': 1})
 
 @bp.route('/terminal_out', methods=(['GET','POST']))
