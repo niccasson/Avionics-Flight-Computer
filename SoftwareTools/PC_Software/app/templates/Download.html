@@ -6,5 +6,23 @@
 
 
 {% block content %}
-Download the data from the flight computer here...
+
+    <div >
+
+        <div class="serialSettings">
+
+            <form>
+
+                <label> Log File Name <input id="logFileNameEntry" value="log.log"></label>
+                <label> CSV File Name<input id="csvFileNameEntry" value="AvionicsData"></label>
+
+            </form>
+
+
+        </div>
+
+        <button id="downloadButton" class="main_button">Download Data</button>
+
+    </div>
+    <script src="../static/download_script.js"></script>
 {% endblock %}

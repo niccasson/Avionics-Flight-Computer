@@ -26,6 +26,7 @@ nav  .action { display: block; padding: 0.5rem; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
 
+
 :root{
     --main-dark:        #575757;
     --main-light:       #bfbfbf;
@@ -160,14 +161,31 @@ input[type=submit] { align-self: start; min-width: 10em; }
     background: var(--main-light);
 }
 
-.serialSettings button{
+.serialSettings button,input[type=button]{
       margin: 0 auto;
     text-align: center;
     display: block;
     width: 50%;
      border-radius: 5px;
     border:0;
-    background: var(--main-light);
+    background: var(--main-dark);
+    color: white;
 
+}
+
+.main_button {
+    margin: 0 auto;
+    text-align: center;
+    display: block;
+    width: 50%;
+    border-radius: 5px;
+    border: 0;
+    background: var(--main-dark);
+    color: white;
+
+}
+.downloadPage{
+
+    text-align: center;
 }
 
