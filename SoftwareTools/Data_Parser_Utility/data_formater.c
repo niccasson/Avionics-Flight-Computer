@@ -225,7 +225,10 @@ int main(){
             sprintf(str,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",time_abs,a.x,a.y,a.z,g.x,g.y,g.z,p.pres,t.temp);
         }
         else{
-            sprintf(str,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",time_abs,a.x,a.y,a.z,g.x,g.y,g.z,p.pres,t.temp);
+            //sprintf(str,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",time_abs,a.x,a.y,a.z,g.x,g.y,g.z,p.pres,t.temp);
+            sprintf(str,"%d,%d,%d,%d,%d,%d,%d\n",time_abs,a.x,a.y,a.z,g.x,g.y,g.z);
+
+
         }
 
         fputs(str,fp_out);

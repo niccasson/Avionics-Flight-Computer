@@ -11,3 +11,8 @@ bp = Blueprint('download', __name__)
 def load_download():
 
     return render_template('Download.html')
+
+@bp.route('DownloadData', methods=(['GET','POST']))
+def startDownload():
+
+
