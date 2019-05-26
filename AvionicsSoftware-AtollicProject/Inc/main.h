@@ -71,6 +71,7 @@ extern "C" {
 //#include "pressure_sensor_bmp280.h"
 #include "pressure_sensor_bmp3.h"
 #include "startupTask.h"
+#include "buzzer.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 

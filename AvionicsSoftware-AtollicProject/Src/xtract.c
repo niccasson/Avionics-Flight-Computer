@@ -89,6 +89,18 @@ void handle_command(char* command,UART_HandleTypeDef * uart,FlashStruct_t * flas
 	else if(strcmp(command, "start") == 0){
 		//start();
 	}
+	else if(strcmp(command, "configure") == 0){
+
+		//configure();
+	}
+	else if(strcmp(command, "cont_check") == 0){
+
+
+	}
+	else if (strcmp(command, "fire") == 0){
+
+
+	}
 	else{
 		sprintf(output, "Command [%s] not recognized.", command);
 		transmit_line(uart, output);

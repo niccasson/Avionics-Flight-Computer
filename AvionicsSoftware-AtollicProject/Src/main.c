@@ -53,6 +53,8 @@ int main(void)
   MX_HAL_UART6_Init(&huart6_ptr); //UART uses GPIO pin 2 & 3
   transmit_line(&huart6_ptr,"UMSATS ROCKETRY FLIGHT COMPUTER");
 
+  BuzzerInitialization();
+  buzz(5);
 
   QueueHandle_t imuQueue_h = xQueueCreate(10,sizeof(imu_data_struct));
   if(imuQueue_h == NULL){

@@ -30,6 +30,10 @@
 #define USR_PB_PIN				GPIO_PIN_1
 #define USR_PB_PORT				GPIOB
 
+//Buzzer
+#define BUZZER_PORT				GPIOB
+#define BUZZER_PIN				GPIO_PIN_2
+
 
 //User GPIO
 #define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.

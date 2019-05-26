@@ -264,33 +264,33 @@ void loggingTask(void * params){
 			if(buffer_selection == 0){
 				//We just switched to A so transmit B.
 
-				FlashStatus_t stat_f = program_page(flash_ptr,flash_address,data_bufferB,DATA_BUFFER_SIZE);
-			  	  while(IS_DEVICE_BUSY(stat_f)){
-			  		  stat_f = get_status_reg(flash_ptr);
-			  		 vTaskDelay(1);
-			  	  }
-				//transmit_bytes(huart,data_bufferB,256);
+//				FlashStatus_t stat_f = program_page(flash_ptr,flash_address,data_bufferB,DATA_BUFFER_SIZE);
+//			  	  while(IS_DEVICE_BUSY(stat_f)){
+//			  		  stat_f = get_status_reg(flash_ptr);
+//			  		 vTaskDelay(1);
+//			  	  }
+				transmit_bytes(huart,data_bufferB,256);
 
-				flash_address += DATA_BUFFER_SIZE;
-				if(flash_address>=FLASH_SIZE_BYTES){
-					while(1);
-				}
+//				flash_address += DATA_BUFFER_SIZE;
+//				if(flash_address>=FLASH_SIZE_BYTES){
+//					while(1);
+//				}
 			}
 			else if (buffer_selection == 1){
 				//We just switched to B so transmit A
 
-				FlashStatus_t stat_f2 = program_page(flash_ptr,flash_address,data_bufferA,DATA_BUFFER_SIZE);
-			  	  while(IS_DEVICE_BUSY(stat_f2)){
-			  		  stat_f2 = get_status_reg(flash_ptr);
-			  		 vTaskDelay(1);
-			  	  }
-				//transmit_bytes(huart,data_bufferA,256);
+				//FlashStatus_t stat_f2 = program_page(flash_ptr,flash_address,data_bufferA,DATA_BUFFER_SIZE);
+//			  	  while(IS_DEVICE_BUSY(stat_f2)){
+//			  		  stat_f2 = get_status_reg(flash_ptr);
+//			  		 vTaskDelay(1);
+//			  	  }
+				transmit_bytes(huart,data_bufferA,256);
 
-				flash_address += DATA_BUFFER_SIZE;
-
-				if(flash_address>=FLASH_SIZE_BYTES){
-					while(1);
-				}
+//				flash_address += DATA_BUFFER_SIZE;
+//
+//				if(flash_address>=FLASH_SIZE_BYTES){
+//					while(1);
+//				}
 			}
 
 
