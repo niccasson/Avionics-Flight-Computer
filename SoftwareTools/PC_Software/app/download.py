@@ -16,3 +16,4 @@ def load_download():
 def startDownload():
 
 
+    return jsonify("Starting Download")

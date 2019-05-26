@@ -127,7 +127,7 @@ input[type=submit] { align-self: start; min-width: 10em; }
     //background-clip: content-box;
     width:100%;
     font-family: "Courier New";
-    font-size: 15pt;
+    font-size: 12pt;
 -webkit-appearance:none;
 
 }
