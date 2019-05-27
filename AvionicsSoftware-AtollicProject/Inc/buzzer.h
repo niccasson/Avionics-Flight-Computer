@@ -24,7 +24,7 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #define FREQ 4000 //in hertz
 #define COUNTER (84000000 * ((1/FREQ)/2)) //84000000 = clock frequency in hz
-#define SECOND 400
+#define SECOND 4
 //#define PIN1 GPIO_PIN_4
 //#define PIN2 GPIO_PIN_5
 
@@ -39,16 +39,16 @@
 // Returns:
 //  void
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
- void BuzzerInitialization(void);
+ void buzzerInit(void);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  makes a buzzer buzz for a given amount of seconds
+//  makes a buzzer buzz for a given amount of milliseconds
 //
 // Returns:
 //  int seconds
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void buzz(int seconds);
+void buzz(int milliseconds);
 
 void Error_Handler(void);
 
