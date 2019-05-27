@@ -47,7 +47,8 @@ def connect():
     print("com: {}  baud: {}".format(com, baud))
 
     try:
-        app.SerialPort = data_reader.SerialFunctions(baud, com, 'log.log')
+        print("log file: {}".format(app.globalData['currentLogFile']))
+        app.SerialPort = data_reader.SerialFunctions(baud, com, app.globalData['currentLogFile'])
         print("starting thread")
         serialReader.run(app.SerialPort)
 

@@ -3,7 +3,7 @@ import os
 
 from flask import Flask
 
-globalData = {'serialOpen': False, 'terminalHistory': "", 'currentLogFile': "", 'currentCSV': "123"}
+globalData = {'serialOpen': False, 'terminalHistory': "", 'currentLogFile': "log.log", 'currentCSV': "UMSATS_ROCKET.log"}
 
 SerialPort = None
 

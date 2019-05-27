@@ -24,7 +24,7 @@ class SerialFunctions:
         self.s.port = port
         self.s.timeout = 5
         self.file = open(filename,"wb")
-
+        self.fileopen = True
         self.s.open()
         
         time.sleep(1)  # Wait for serial port to be open.
@@ -37,14 +37,21 @@ class SerialFunctions:
 
     def read(self):
         data = self.s.read()
-        self.file.write(data)
+        if self.fileopen:
+            self.file.write(data)
         return data
 
     
     def close(self):
         self.s.close()
 
+    def close_file(self):
+        self.fileopen = False
+        self.file.close()
 
+    def open_file(self,filename):
+        self.file = open(filename,'wb')
+        self.fileopen = True
 def list_COM_ports():
     """
     This function lists all available com ports and returns a list of the names.
