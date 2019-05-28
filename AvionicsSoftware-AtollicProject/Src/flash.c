@@ -101,6 +101,31 @@ FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address){
 	return result;
 }
 
+FlashStatus_t 	erase_param_sector(FlashStruct_t * flash,uint32_t address){
+
+	FlashStatus_t result = FLASH_ERROR;
+
+	uint8_t status_reg = get_status_reg(flash);
+
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		enable_write(flash);
+
+		uint8_t command_address [] = { ERASE_PARAM_SEC_COMMAND, (address & (HIGH_BYTE_MASK_24B))>>16, (address & (MID_BYTE_MASK_24B))>>8, address & (LOW_BYTE_MASK_24B)};
+
+		spi_send(flash->hspi,command_address,4,NULL,0,10);
+
+		result = FLASH_OK;
+	}
+	return result;
+}
+
+
 FlashStatus_t 	erase_device(FlashStruct_t * flash){
 
 	FlashStatus_t result = FLASH_ERROR;

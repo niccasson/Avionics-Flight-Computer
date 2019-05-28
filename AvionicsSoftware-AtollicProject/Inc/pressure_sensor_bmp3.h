@@ -58,6 +58,7 @@ typedef struct{
 
 	UART_HandleTypeDef * huart;
 	QueueHandle_t	bmp388_queue;
+	configData_t *flightCompConfig;
 
 } PressureTaskParams;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

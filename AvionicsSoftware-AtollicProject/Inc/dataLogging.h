@@ -23,13 +23,12 @@
 #include "flash.h"					//For flash memory functions
 #include "pressure_sensor_bmp3.h"	//For bmp reading struct
 #include "sensorAG.h"				//For imu_reading struct
-#include "configuration.h"
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define DATA_BUFFER_SIZE	256			//Matches flash memory page size.
+#define DATA_BUFFER_SIZE	FLASH_PAGE_SIZE			//Matches flash memory page size.
 #define TIME_RESOLUTION		DATA_RATE
 #define ACC_TYPE 			0x8000
 #define GYRO_TYPE			0x4000
@@ -61,6 +60,7 @@ typedef struct{
 
 	FlashStruct_t * flash_ptr;
 	UART_HandleTypeDef * uart;
+	configData_t *flightCompConfig;
 
 	//Queues
 	QueueHandle_t IMU_data_queue;	//For holding accelerometer and gyroscope readings.
