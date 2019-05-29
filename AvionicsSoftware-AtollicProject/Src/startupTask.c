@@ -46,21 +46,25 @@
 // Returns:
 //
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void eraseFlash(FlashStruct_t * flash,UART_HandleTypeDef * huart);
+static void eraseFlash(startParams * params);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void eraseFlash(FlashStruct_t * flash,UART_HandleTypeDef * huart){
+static void eraseFlash(startParams * params){
 
 	  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 
 	  FlashStatus_t stat;
 
+	  FlashStruct_t * flash = params->flash_ptr;
+	  UART_HandleTypeDef * huart = params->huart_ptr;
+	  configData_t * config = params->flightCompConfig;
+
 	  uint8_t dataRX[256];
 	  transmit_line(huart,"Checking flash memory...");
 	 // Read the first page of memory. If its empty, assume the whole memory is empty.
-	  stat = read_page(flash,FLASH_START_ADDRESS,dataRX,256);
+	  stat = read_page(flash,config->values.start_data_address,dataRX,256);
 
 	  uint16_t good= 0xFFFF;
 
@@ -77,6 +81,8 @@ static void eraseFlash(FlashStruct_t * flash,UART_HandleTypeDef * huart){
 		  		  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 
 	  }else{
+
+
 		  transmit_line(huart,"flash not empty.");
 		  //Erase the whole flash. This could take up to 2 minutes.
 	  	  stat = erase_device(flash);
@@ -121,6 +127,7 @@ void vTask_starter(void * pvParams){
 	  TaskHandle_t xtractTask_h = sp->xtractTask_h;
 	  FlashStruct_t * flash = sp->flash_ptr;
 	  UART_HandleTypeDef * huart = sp->huart_ptr;
+	  configData_t * config = sp->flightCompConfig;
 
 	  vTaskSuspend(xtractTask_h);
 	  vTaskSuspend(imuTask_h);
@@ -137,30 +144,35 @@ void vTask_starter(void * pvParams){
 
 		  }else{
 
-			  uint32_t count = 0;
-			  uint32_t delay = 2000;
-			  uint8_t state = 0;
+			  if(!IS_IN_FLIGHT(config->values.flags)){
 
-			  while(count<INITIAL_WAIT_TIME){
+				  uint32_t count = 0;
+				  uint32_t delay = 2000;
+				  uint8_t state = 0;
 
-				  vTaskDelay(pdMS_TO_TICKS(delay));
-				  HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
-				  count += delay;
+				  uint32_t time = config->values.initial_time_to_wait;
 
-				  if(count > (INITIAL_WAIT_TIME/2) && state ==0){
+				  while(count<time){
 
-					  delay = 1000;
-					  state = 1;
+					  vTaskDelay(pdMS_TO_TICKS(delay));
+					  HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
+					  count += delay;
+
+					  if(count > (time/2) && state ==0){
+
+						  delay = 1000;
+						  state = 1;
+					  }
+					  else if( count > (3*(time/4)) && state == 1){
+
+						  delay = 500;
+						  state = 2;
+					  }
+
 				  }
-				  else if( count > (3*(INITIAL_WAIT_TIME/4)) && state == 1){
 
-					  delay = 500;
-					  state = 2;
-				  }
-
+			  	  eraseFlash(sp);
 			  }
-
-			  eraseFlash(flash,huart);
 
 			  vTaskResume(dataLoggingTask_h);
 			  vTaskResume(imuTask_h);

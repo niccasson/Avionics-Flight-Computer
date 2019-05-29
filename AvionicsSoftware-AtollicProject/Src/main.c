@@ -51,6 +51,7 @@ void vTask_starter(void * pvParams);
 
 int main(void)
 
+
 {
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -102,8 +103,9 @@ int main(void)
 	transmit_line(&huart6_ptr,lines);
 
 
-
-
+	uint32_t end_Address = scan_flash(&flash);
+	sprintf(lines,"end address :%ld \n",end_Address);
+	transmit_line(&huart6_ptr,lines);transmit_line(&huart6_ptr,lines);
 
 
 
@@ -133,6 +135,7 @@ int main(void)
 
 	tasks.flash_ptr = &flash;
 	tasks.huart_ptr = &huart6_ptr;
+	tasks.flightCompConfig = &flightCompConfig;
 
 
 	//testIMU();

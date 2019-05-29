@@ -260,4 +260,41 @@ FlashStatus_t		initialize_flash(FlashStruct_t * flash){
 
 	return result;
 }
+
+uint32_t scan_flash(FlashStruct_t * flash){
+
+
+	uint32_t result = 0;
+
+	uint8_t dataRX[256];
+	int i;
+	int j;
+	for(i=FLASH_START_ADDRESS;i<FLASH_SIZE_BYTES;i+= 256){
+
+		FlashStatus_t stat;
+
+		for(j=0;j<256;j++){
+			dataRX[j] = 0;
+		}
+
+		stat = read_page(flash,i,dataRX,256);
+
+		uint16_t empty= 0xFFFF;
+		for(i=0;i<256;i++){
+
+			if(dataRX[i] != 0xFF){
+				empty --;
+			}
+		}
+
+		if(empty == 0xFFFF){
+
+			result = i;
+			break;
+		}
+	}
+
+	return result;
+
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

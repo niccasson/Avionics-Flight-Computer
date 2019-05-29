@@ -57,8 +57,18 @@ void loggingTask(void * params){
 	LoggingStruct_t * logStruct = (LoggingStruct_t *)params;
 	FlashStruct_t * flash_ptr = logStruct->flash_ptr;
 	UART_HandleTypeDef * huart = logStruct->uart;
+	configData_t * configParams = logStruct->flightCompConfig;
 
-	uint32_t flash_address = FLASH_START_ADDRESS;
+	uint32_t flash_address;
+
+	//If start and end are equal there is no other flight data, otherwise start recording after already saved data.
+	if(configParams->values.start_data_address == configParams->values.end_data_address){
+
+		flash_address = configParams->values.start_data_address;
+	}else{
+		flash_address = configParams->values.end_data_address;
+	}
+
 
 
 	uint8_t data_bufferA[DATA_BUFFER_SIZE];			//This stores the data until we have enough to write to flash.
@@ -97,7 +107,7 @@ void loggingTask(void * params){
 		/* IMU READING*******************************************************************************************************************************/
 
 		//Try and get data from the IMU queue. Block for up to a quarter of the time between the fastest measurement.
-		BaseType_t stat = xQueueReceive(logStruct->IMU_data_queue,&imu_reading,TIME_RESOLUTION/4);
+		BaseType_t stat = xQueueReceive(logStruct->IMU_data_queue,&imu_reading,configParams->values.data_rate/4);
 
 		if(stat == pdPASS){
 			//We have read data from the IMU.
@@ -145,7 +155,9 @@ void loggingTask(void * params){
 
 		/* BMP READING*******************************************************************************************************************************/
 		//Try and get data from the BMP queue. Block for up to a quarter of the time between the fastest measurement.
-		stat = xQueueReceive(logStruct->PRES_data_queue,&bmp_reading,TIME_RESOLUTION/4);
+		stat = xQueueReceive(logStruct->PRES_data_queue,&bmp_reading,configParams->values.data_rate
+
+				/4);
 
 		if(stat == pdPASS){
 
@@ -264,33 +276,44 @@ void loggingTask(void * params){
 			if(buffer_selection == 0){
 				//We just switched to A so transmit B.
 
-//				FlashStatus_t stat_f = program_page(flash_ptr,flash_address,data_bufferB,DATA_BUFFER_SIZE);
-//			  	  while(IS_DEVICE_BUSY(stat_f)){
-//			  		  stat_f = get_status_reg(flash_ptr);
-//			  		 vTaskDelay(1);
-//			  	  }
-				transmit_bytes(huart,data_bufferB,256);
+				if(IS_RECORDING(configParams->values.flags)){
 
-//				flash_address += DATA_BUFFER_SIZE;
-//				if(flash_address>=FLASH_SIZE_BYTES){
-//					while(1);
-//				}
+					FlashStatus_t stat_f = program_page(flash_ptr,flash_address,data_bufferB,DATA_BUFFER_SIZE);
+					  while(IS_DEVICE_BUSY(stat_f)){
+						  stat_f = get_status_reg(flash_ptr);
+						 vTaskDelay(1);
+					  }
+
+
+					flash_address += DATA_BUFFER_SIZE;
+					if(flash_address>=FLASH_SIZE_BYTES){
+						while(1);
+					}
+
+				}
+				else{
+					transmit_bytes(huart,data_bufferB,256);
+				}
 			}
 			else if (buffer_selection == 1){
 				//We just switched to B so transmit A
 
-				//FlashStatus_t stat_f2 = program_page(flash_ptr,flash_address,data_bufferA,DATA_BUFFER_SIZE);
-//			  	  while(IS_DEVICE_BUSY(stat_f2)){
-//			  		  stat_f2 = get_status_reg(flash_ptr);
-//			  		 vTaskDelay(1);
-//			  	  }
-				transmit_bytes(huart,data_bufferA,256);
+				if(IS_RECORDING(configParams->values.flags)){
+					FlashStatus_t stat_f2 = program_page(flash_ptr,flash_address,data_bufferA,DATA_BUFFER_SIZE);
+					  while(IS_DEVICE_BUSY(stat_f2)){
+						  stat_f2 = get_status_reg(flash_ptr);
+						 vTaskDelay(1);
+					  }
 
-//				flash_address += DATA_BUFFER_SIZE;
-//
-//				if(flash_address>=FLASH_SIZE_BYTES){
-//					while(1);
-//				}
+					flash_address += DATA_BUFFER_SIZE;
+
+					if(flash_address>=FLASH_SIZE_BYTES){
+						while(1);
+					}
+				}
+				else{
+					transmit_bytes(huart,data_bufferA,256);
+				}
 			}
 
 

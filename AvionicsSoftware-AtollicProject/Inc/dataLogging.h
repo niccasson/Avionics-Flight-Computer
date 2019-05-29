@@ -29,7 +29,6 @@
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DATA_BUFFER_SIZE	FLASH_PAGE_SIZE			//Matches flash memory page size.
-#define TIME_RESOLUTION		DATA_RATE
 #define ACC_TYPE 			0x8000
 #define GYRO_TYPE			0x4000
 #define PRES_TYPE			0x2000
