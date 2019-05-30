@@ -93,8 +93,16 @@ int main(void)
 	}
 
 	//Initialize and get the flight computer parameters.
-	init_config(&flightCompConfig);
+
 	flightCompConfig.values.flash = &flash;
+
+	read_config(&flightCompConfig);
+
+	if(flightCompConfig.values.id != ID){
+
+		init_config(&flightCompConfig);
+		write_config(&flightCompConfig);
+	}
 
 	read_config(&flightCompConfig);
 

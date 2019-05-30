@@ -269,7 +269,8 @@ uint32_t scan_flash(FlashStruct_t * flash){
 	uint8_t dataRX[256];
 	int i;
 	int j;
-	for(i=FLASH_START_ADDRESS;i<FLASH_SIZE_BYTES;i+= 256){
+	i=FLASH_START_ADDRESS;
+	while(i<FLASH_SIZE_BYTES){
 
 		FlashStatus_t stat;
 
@@ -280,9 +281,9 @@ uint32_t scan_flash(FlashStruct_t * flash){
 		stat = read_page(flash,i,dataRX,256);
 
 		uint16_t empty= 0xFFFF;
-		for(i=0;i<256;i++){
+		for(j=0;j<256;j++){
 
-			if(dataRX[i] != 0xFF){
+			if(dataRX[j] != 0xFF){
 				empty --;
 			}
 		}
@@ -292,6 +293,8 @@ uint32_t scan_flash(FlashStruct_t * flash){
 			result = i;
 			break;
 		}
+
+		i = i + 256;
 	}
 
 	return result;

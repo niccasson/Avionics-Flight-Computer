@@ -99,6 +99,7 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	else if((strcmp(command, "config") == 0 && *state == MAIN )|| *state == CONFIG){
 
 		if(strcmp(command,"return")==0){
+			transmit_line(uart,"Returning to main menu");
 			*state = MAIN;
 		}else{
 			*state = CONFIG;
@@ -114,6 +115,7 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 
 	}
 	else if((strcmp(command, "save") == 0 && *state == MAIN )|| *state == SAVE){
+		write_config(config);
 
 	}
 	else{
@@ -143,6 +145,49 @@ void help(UART_HandleTypeDef * uart){
 					);
 }
 
+
+void ematch(char* command, xtractParams * params){
+
+	UART_HandleTypeDef * uart = params->huart;
+	FlashStruct_t * flash = params->flash;
+	configData_t * config = params->flightCompConfig;
+
+	char output [256];
+
+	if(strcmp(command, "help") == 0 || strcmp(command, "config") == 0){
+
+		transmit_line(uart, "E-Matches:\r\n"
+						"\t[help] - displays the help menu and more commands\r\n"
+						"\t[return] - Return to main menu\r\n"
+						"\t[a] - Check continuity Drogue\r\n"
+						"\t[b] - Check continuity Main\r\n"
+						"\t[c] - Fire Drogue (5 second delay)\r\n"
+						"\t[d] - Fire Main   (5 second delay)\r\n"
+						);
+
+	}
+	else if (command[0] == 'a'){
+
+
+		}
+	else if (command[0] == 'b'){
+
+
+		}
+	else if (command[0] == 'c'){
+
+
+		}
+	else if (command[0] == 'd'){
+
+
+		}
+
+
+	}
+
+}
+
 void configure(char* command,xtractParams * params){
 
 	UART_HandleTypeDef * uart = params->huart;
@@ -157,6 +202,7 @@ void configure(char* command,xtractParams * params){
 						"\t[help] - displays the help menu and more commands\r\n"
 						"\t[return] - Return to main menu\r\n"
 						"\t[a] - Set data rate Hz(0-100)\r\n"
+						"\t[z] - Set the initial time to wait (0-10000000)\r\n"
 						"\t[b] - set if recording to flash (1/0)\r\n"
 						"\t[c] - set accelerometer bandwidth (0,2,4)\r\n"
 						"\t[d] - set accelerometer range (3,6,12,24)\r\n"
@@ -172,6 +218,7 @@ void configure(char* command,xtractParams * params){
 
 	}
 	else if (command[0] == 'a'){
+
 		char val_str[10];
 
 		strcpy(val_str,&command[1]);
@@ -185,6 +232,24 @@ void configure(char* command,xtractParams * params){
 			config->values.data_rate = 1000/value;
 
 		}
+
+
+	}
+	else if (command[0] == 'z'){
+
+		char val_str[15];
+
+				strcpy(val_str,&command[1]);
+
+				int value = atoi(val_str);
+				if( value >0 && value <=10000000){
+
+					sprintf(output,"Setting initial time to wait to %d ms.\n",value);
+
+					transmit_line(uart,output);
+					config->values.initial_time_to_wait = value;
+
+				}
 	}
 	else if (command[0] == 'b'){
 
@@ -405,20 +470,268 @@ void configure(char* command,xtractParams * params){
 	}
 	else if (command[0] == 'g'){
 
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+				case 125:
+					sprintf(output,"Setting gyroscope range to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.gy_range = BMI08X_GYRO_RANGE_125_DPS;
+					break;
+
+				case 250:
+					sprintf(output,"Setting gyroscope range to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.gy_range = BMI08X_GYRO_RANGE_250_DPS;
+					break;
+
+				case 500:
+					sprintf(output,"Setting gyroscope range to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.gy_range = BMI08X_GYRO_RANGE_500_DPS;
+					break;
+
+				case 1000:
+					sprintf(output,"Setting gyroscope range to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.gy_range = BMI08X_GYRO_RANGE_1000_DPS;
+					break;
+
+				case 2000:
+					sprintf(output,"Setting gyroscope range to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.gy_range = BMI08X_GYRO_RANGE_2000_DPS;
+					break;
+
+		}
+
 	}
 	else if (command[0] == 'i'){
 
+		//set BMP388 odr (1,12,25,50,100,200) \r\n"
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+				case 1:
+					sprintf(output,"Setting bmp odr to 1.5 Hz .\n" );
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_1_5_HZ;
+					break;
+
+				case 12:
+					sprintf(output,"Setting bmp odr to 12.5 Hz .\n");
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_12_5_HZ;
+					break;
+
+				case 25:
+					sprintf(output,"Setting bmp odr to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_25_HZ;
+					break;
+
+				case 50:
+					sprintf(output,"Setting bmp odr to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_50_HZ;
+					break;
+
+				case 100:
+					sprintf(output,"Setting bmp odr to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_100_HZ;
+					break;
+
+				case 200:
+					sprintf(output,"Setting bmp odr to %d Hz .\n",value );
+					transmit_line(uart,output);
+					config->values.bmp_odr = BMP3_ODR_200_HZ;
+					break;
+
+		}
 	}
 	else if (command[0] == 'j'){
+		//set pressure oversampling (0,2,4,8,16,32)
 
+
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+				case 0:
+					sprintf(output,"Setting pressure oversampling 0x .\n" );
+					transmit_line(uart,output);
+					config->values.pres_os =  BMP3_NO_OVERSAMPLING;
+					break;
+
+				case 2:
+					sprintf(output,"Setting pressure oversampling 2x  .\n");
+					transmit_line(uart,output);
+					config->values.pres_os = BMP3_OVERSAMPLING_2X;
+					break;
+
+				case 4:
+					sprintf(output,"Setting pressure oversampling 4x .\n");
+					transmit_line(uart,output);
+					config->values.pres_os = BMP3_OVERSAMPLING_4X;
+					break;
+
+				case 8:
+					sprintf(output,"Setting pressure oversampling to 8x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.pres_os = BMP3_OVERSAMPLING_8X;
+					break;
+
+				case 16:
+					sprintf(output,"Setting pressure oversampling to 16x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.pres_os = BMP3_OVERSAMPLING_16X;
+					break;
+
+				case 32:
+					sprintf(output,"Setting pressure oversampling to 32x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.pres_os = BMP3_OVERSAMPLING_32X;
+					break;
+
+		}
 	}
 	else if (command[0] == 'k'){
+
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+				case 0:
+					sprintf(output,"Setting temperature oversampling 0x .\n" );
+					transmit_line(uart,output);
+					config->values.temp_os =  BMP3_NO_OVERSAMPLING;
+					break;
+
+				case 2:
+					sprintf(output,"Setting temperature oversampling 2x  .\n");
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_OVERSAMPLING_2X;
+					break;
+
+				case 4:
+					sprintf(output,"Setting temperature oversampling 4x .\n");
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_OVERSAMPLING_4X;
+					break;
+
+				case 8:
+					sprintf(output,"Setting temperature oversampling to 8x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_OVERSAMPLING_8X;
+					break;
+
+				case 16:
+					sprintf(output,"Setting temperature oversampling to 16x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_OVERSAMPLING_16X;
+					break;
+
+				case 32:
+					sprintf(output,"Setting temperature oversampling to 32x Hz .\n" );
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_OVERSAMPLING_32X;
+					break;
+
+		}
 
 	}
 	else if (command[0] == 'l'){
 
+		//set BMP388 IIR filter coefficient (1,3,7,15,31,63,127)
+
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+				case 1:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value );
+					transmit_line(uart,output);
+					config->values.temp_os =  BMP3_IIR_FILTER_COEFF_1;
+					break;
+
+				case 3:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value);
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_3;
+					break;
+
+				case 7:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value);
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_7;
+					break;
+
+				case 15:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n" ,value);
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_15;
+					break;
+
+				case 31:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value );
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_31;
+					break;
+
+				case 63:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value);
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_63;
+					break;
+
+
+				case 127:
+					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value );
+					transmit_line(uart,output);
+					config->values.temp_os = BMP3_IIR_FILTER_COEFF_127;
+					break;
+		}
+
 	}
 	else if (command[0] == 'm'){
+
+		sprintf(output,"The current settings (not in flash):");
+		transmit_line(uart,output);
+
+		sprintf(output,"ID: %d \tIntitial Time To Wait: %ld \r\n",config->values.id,config->values.initial_time_to_wait);
+		transmit_line(uart,output);
+
+		sprintf(output,"data rate: %d Hz \tSet to record: %d \r\n",1000/config->values.data_rate,IS_RECORDING(config->values.flags));
+		transmit_line(uart,output);
+
+		sprintf(output,"start of data: %ld \tend of data: %ld \r\n",config->values.start_data_address,config->values.end_data_address);
+		transmit_line(uart,output);
+
+		sprintf(output,"accelerometer bandwidth: %d \t accelerometer data rate: %d \r\n",config->values.ac_bw,config->values.ac_odr);
+		transmit_line(uart,output);
 
 	}
 	else{
