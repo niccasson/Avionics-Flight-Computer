@@ -104,18 +104,31 @@
 #define IMU_GYRO_INT_PIN  		GPIO_PIN_8
 #define IMU_GYRO_INT_PORT 		GPIOB
 
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
+//Recovery Circuit (driver1 -> drogue | driver2 -> main)
+#define RECOV_DROGUE_ACTIVATE_PIN		GPIO_PIN_2	//Output
+#define RECOV_DROGUE_ACTIVATE_PORT		GPIOA
 
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
+#define RECOV_DROGUE_ENABLE_PIN			GPIO_PIN_1	//Output
+#define RECOV_DROGUE_ENABLE_PORT		GPIOA
 
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
+#define RECOV_DROGUE_OVERCURRENT_PIN	GPIO_PIN_0	//Input
+#define RECOV_DROGUE_OVERCURRENT_PORT	GPIOA
 
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
+#define RECOV_DROGUE_CONTINUITY_PIN		GPIO_PIN_3	//Input
+#define RECOV_DROGUE_CONTINUITY_PORT	GPIOA
+
+
+#define RECOV_MAIN_ACTIVATE_PIN			GPIO_PIN_8	//Output
+#define RECOV_MAIN_ACTIVATE_PORT		GPIOA
+
+#define RECOV_MAIN_ENABLE_PIN			GPIO_PIN_9	//Output
+#define RECOV_MAIN_ENABLE_PORT			GPIOA
+
+#define RECOV_MAIN_OVERCURRENT_PIN		GPIO_PIN_10	//Input
+#define RECOV_MAIN_OVERCURRENT_PORT		GPIOA
+
+#define RECOV_MAIN_CONTINUITY_PIN		GPIO_PIN_9	//Input
+#define RECOV_MAIN_CONTINUITY_PORT		GPIOC
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -146,4 +159,4 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#endif // TEMPLATE_H
+#endif // HARDWARE_DEFS_H

@@ -1,4 +1,3 @@
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // UMSATS Rocketry 2019
 //
@@ -6,17 +5,19 @@
 //  UMSATS/Avionics
 //
 // File Description:
-//  Header file for functions related to recovery ignition circuit.
+//  Source file for functions related to recovery ignition circuit.
 //
 // History
 // 2019-05-29 by Joseph Howarth
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#ifndef RECOVERY_H
-#define RECOVERY_H
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include "recovery.h"
+#include "hardwareDefs.h"
+#include "stm32f4xx_hal.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -25,24 +26,7 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-typedef enum {
-	DROGUE,
-	MAIN
 
-} recoverySelect_t;
-
-typedef enum{
-
-	OPEN_CIRCUIT,
-	SHORT_CIRCUIT
-
-}continuityStatus_t;
-
-typedef enum{
-
-	NO_OVERCURRENT,
-	OVERCURRENT
-}overcurrentStatus_t;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -52,57 +36,124 @@ typedef enum{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// CONSTANTS
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Sets up the GPIO pins for the recovery functions.
-//
-// Returns:
-//  Enter description of return values (if any).
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void recovery_init();
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Enables the mosfet driver for the specified recovery event .
-//
-// Returns:
-//
+// FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void enable_mosfet(recoverySelect_t recov_event);
+void recovery_init(){
+
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	//Setup outputs.
+	GPIO_InitStruct.Pin       = RECOV_DROGUE_ACTIVATE_PIN|RECOV_DROGUE_ENABLE_PIN|RECOV_MAIN_ACTIVATE_PIN|RECOV_MAIN_ENABLE_PIN;
+	GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+	HAL_GPIO_Init(RECOV_DROGUE_ACTIVATE_PORT,&GPIO_InitStruct);
+
+	//Set default state drogue.
+	HAL_GPIO_WritePin(RECOV_DROGUE_ACTIVATE_PORT,RECOV_DROGUE_ACTIVATE_PIN,GPIO_PIN_RESET);	//Active high so set to low.
+	HAL_GPIO_WritePin(RECOV_DROGUE_ENABLE_PORT,RECOV_DROGUE_ENABLE_PIN,GPIO_PIN_SET);			//Active low so set to high.
+
+	//Set default state main.
+	HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_RESET);	//Active high so set to low.
+	HAL_GPIO_WritePin(RECOV_MAIN_ENABLE_PORT,RECOV_MAIN_ENABLE_PIN,GPIO_PIN_SET);			//Active low so set to high.
 
 
+	//Setup inputs.
+	GPIO_InitTypeDef GPIO_InitStruct2;
+
+	GPIO_InitStruct2.Pin = RECOV_DROGUE_OVERCURRENT_PIN|RECOV_DROGUE_CONTINUITY_PIN|RECOV_MAIN_OVERCURRENT_PIN;
+	GPIO_InitStruct2.Mode = GPIO_MODE_INPUT;
+	HAL_GPIO_Init(RECOV_DROGUE_OVERCURRENT_PORT,&GPIO_InitStruct2);
+
+	GPIO_InitTypeDef GPIO_InitStruct3;
+
+	GPIO_InitStruct3.Pin = RECOV_MAIN_CONTINUITY_PIN;
+	GPIO_InitStruct3.Mode= GPIO_MODE_INPUT;
+	HAL_GPIO_Init(RECOV_MAIN_CONTINUITY_PORT,&GPIO_InitStruct3);
+
+
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Activates the mosfet driver for the specified recovery event .
-//
-// Returns:
-//
+
+void enable_mosfet(recoverySelect_t recov_event){
+
+	if(recov_event == MAIN){
+		//Active low.
+		HAL_GPIO_WritePin(RECOV_MAIN_ENABLE_PORT,RECOV_MAIN_ENABLE_PIN,GPIO_PIN_RESET);
+	}
+	else if(recov_event == DROGUE){
+
+		//Active low.
+		HAL_GPIO_WritePin(RECOV_DROGUE_ENABLE_PORT,RECOV_DROGUE_ENABLE_PIN,GPIO_PIN_RESET);
+	}
+}
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void activate_mosfet(recoverySelect_t recov_event);
+
+void activate_mosfet(recoverySelect_t recov_event){
+
+	if(recov_event == MAIN){
+		//Active high.
+		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_SET);
+	}
+	else if(recov_event == DROGUE){
+
+		//Active high.
+		HAL_GPIO_WritePin(RECOV_DROGUE_ACTIVATE_PORT,RECOV_DROGUE_ACTIVATE_PIN,GPIO_PIN_SET);
+	}
+}
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Checks the continuity for the specified recovery circuit .
-//
-// Returns:
-//	A continuityStatus_t of OPEN_CIRCUIT or SHORT_CIRCUIT.
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-continuityStatus_t check_continuity(recoverySelect_t recov_event);
+
+
+continuityStatus_t check_continuity(recoverySelect_t recov_event){
+
+	GPIO_PinState result = GPIO_PIN_RESET;//Should the default be to read open or closed circuit???
+	continuityStatus_t cont;
+
+	if(recov_event == MAIN){
+		result = HAL_GPIO_ReadPin(RECOV_MAIN_CONTINUITY_PORT,RECOV_MAIN_CONTINUITY_PIN);
+	}
+	else if(recov_event == DROGUE){
+		result = HAL_GPIO_ReadPin(RECOV_DROGUE_CONTINUITY_PORT,RECOV_DROGUE_CONTINUITY_PIN);
+	}
+
+	if(result == GPIO_PIN_SET){
+		cont = SHORT_CIRCUIT;
+	}
+	else{
+		cont = OPEN_CIRCUIT;
+	}
+
+	return cont;
+}
+
+
+overcurrentStatus_t check_overcurrent(recoverySelect_t recov_event){
+
+	GPIO_PinState result = GPIO_PIN_RESET;//Should the default be to read open or closed circuit???
+	overcurrentStatus_t overcurrent;
+
+	if(recov_event == MAIN){
+		result = HAL_GPIO_ReadPin(RECOV_MAIN_OVERCURRENT_PORT,RECOV_MAIN_OVERCURRENT_PIN);
+	}
+	else if(recov_event == DROGUE){
+		result = HAL_GPIO_ReadPin(RECOV_DROGUE_OVERCURRENT_PORT,RECOV_DROGUE_OVERCURRENT_PIN);
+	}
+
+	if(result == GPIO_PIN_SET){
+		overcurrent = NO_OVERCURRENT;
+	}
+	else{
+		overcurrent = OVERCURRENT;
+	}
+
+	return overcurrent;
+}
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Description:
-//  Checks the overcurrent flag for the specified recovery circuit .
-//
-// Returns:
-//	A continuityStatus_t of NO_OVERCURRENT or OVERCURRENT.
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-overcurrentStatus_t check_overcurrent(recoverySelect_t recov_event);
 
-#endif // RECOVERY_H

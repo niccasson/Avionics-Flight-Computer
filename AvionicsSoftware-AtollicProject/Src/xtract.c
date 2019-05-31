@@ -65,10 +65,10 @@ void vTask_xtract(void *pvParameters){
 	UART_HandleTypeDef * uart = params->huart;
 	FlashStruct_t * flash = params->flash;
 
-	menuState_t state = MAIN;
+	menuState_t state = MAIN_MENU;
 	intro(uart); //display help on start up
 	char *cmd_buf = (char*) malloc(sizeof(char) * BUFFER_SIZE); //command buffer
-	state = MAIN;
+	state = MAIN_MENU;
 	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
 	while(1){
 		transmit(uart, ">> ");
@@ -87,34 +87,40 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 
 	char output[BUFFER_SIZE];
 
-	if(strcmp(command, "help") == 0 && *state == MAIN){
+	if(strcmp(command, "help") == 0 && *state == MAIN_MENU){
 		help(uart);
 	}
-	else if(strcmp(command, "start") == 0 && *state == MAIN){
+	else if(strcmp(command, "start") == 0 && *state == MAIN_MENU){
 		//start();
 	}
-	else if((strcmp(command, "read") == 0 && *state == MAIN )|| *state == READ){
+	else if((strcmp(command, "read") == 0 && *state == MAIN_MENU )|| *state == READ){
 		read(params);
 	}
-	else if((strcmp(command, "config") == 0 && *state == MAIN )|| *state == CONFIG){
+	else if((strcmp(command, "config") == 0 && *state == MAIN_MENU )|| *state == CONFIG){
 
 		if(strcmp(command,"return")==0){
 			transmit_line(uart,"Returning to main menu");
-			*state = MAIN;
+			*state = MAIN_MENU;
 		}else{
 			*state = CONFIG;
 		}
 		configure(command,params);
 	}
-	else if((strcmp(command, "ematch") == 0 && *state == MAIN) || *state == EMATCH){
-		*state = 2;
-
+	else if((strcmp(command, "ematch") == 0 && *state == MAIN_MENU) || *state == EMATCH){
+		*state = EMATCH;
+		if(strcmp(command,"return")==0){
+			transmit_line(uart,"Returning to main menu");
+			*state = MAIN_MENU;
+		}else{
+			*state = EMATCH;
+		}
+		ematch(command,params);
 	}
-	else if((strcmp(command, "mem") == 0 && *state == MAIN )|| *state == MEM){
+	else if((strcmp(command, "mem") == 0 && *state == MAIN_MENU )|| *state == MEM){
 		*state = 3;
 
 	}
-	else if((strcmp(command, "save") == 0 && *state == MAIN )|| *state == SAVE){
+	else if((strcmp(command, "save") == 0 && *state == MAIN_MENU )|| *state == SAVE){
 		write_config(config);
 
 	}
@@ -153,38 +159,158 @@ void ematch(char* command, xtractParams * params){
 	configData_t * config = params->flightCompConfig;
 
 	char output [256];
+	int delay = 10000;
 
-	if(strcmp(command, "help") == 0 || strcmp(command, "config") == 0){
+	if(strcmp(command, "help") == 0 || strcmp(command, "ematch") == 0){
 
 		transmit_line(uart, "E-Matches:\r\n"
 						"\t[help] - displays the help menu and more commands\r\n"
 						"\t[return] - Return to main menu\r\n"
 						"\t[a] - Check continuity Drogue\r\n"
 						"\t[b] - Check continuity Main\r\n"
-						"\t[c] - Fire Drogue (5 second delay)\r\n"
-						"\t[d] - Fire Main   (5 second delay)\r\n"
+						"\t[c] - Check overcurrent Drogue\r\n"
+						"\t[d] - Check overcurrent Main\r\n"
+						"\t[e] - Enable Drogue\r\n"
+						"\t[f] - Enable Main\r\n"
+						"\t[g] - Fire Drogue (delayed)\r\n"
+						"\t[i] - Fire Main   (delayed)\r\n"
+						"\t[j] - Set delay (5-60)\r\n "
 						);
+
+	}
+	else if (strcmp(command,"return")==0){
 
 	}
 	else if (command[0] == 'a'){
 
+		recoverySelect_t event = DROGUE;
+		continuityStatus_t cont = check_continuity(event);
+
+		 if(cont == OPEN_CIRCUIT){
+			 sprintf(output,"No continuity was detected on the drogue circuit.\n");
+			 transmit_line(uart,output);
+		 }
+		 else{
+			 sprintf(output,"Continuity was detected on the drogue circuit.\n");
+			 transmit_line(uart,output);
+		 }
 
 		}
 	else if (command[0] == 'b'){
 
+		recoverySelect_t event = MAIN;
+		continuityStatus_t cont = check_continuity(event);
+
+		 if(cont == OPEN_CIRCUIT){
+			 sprintf(output,"No continuity was detected on the main circuit.\n");
+			 transmit_line(uart,output);
+		 }
+		 else{
+			 sprintf(output,"Continuity was detected on the main circuit.\n");
+			 transmit_line(uart,output);
+		 }
 
 		}
 	else if (command[0] == 'c'){
 
+		recoverySelect_t event = DROGUE;
+		overcurrentStatus_t over = check_overcurrent(event);
+
+		 if(over == NO_OVERCURRENT){
+			 sprintf(output,"No overcurrent was detected on the drogue circuit.\n");
+			 transmit_line(uart,output);
+		 }
+		 else{
+			 sprintf(output,"Overcurrent was detected on the drogue circuit.\n");
+			 transmit_line(uart,output);
+		 }
 
 		}
 	else if (command[0] == 'd'){
 
+		recoverySelect_t event = MAIN;
+		overcurrentStatus_t over = check_overcurrent(event);
+
+		 if(over == NO_OVERCURRENT){
+			 sprintf(output,"No overcurrent was detected on the main circuit.\n");
+			 transmit_line(uart,output);
+		 }
+		 else{
+			 sprintf(output,"Overcurrent was detected on the main circuit.\n");
+			 transmit_line(uart,output);
+		 }
+
+		}
+	else if (command[0] == 'e'){
+
+		recoverySelect_t event = DROGUE;
+		enable_mosfet(event);
+		sprintf(output,"DROGUE DEPLOYMENT CIRCUIT IS NOW ARMED!.\n");
+		 transmit_line(uart,output);
+		}
+	else if (command[0] == 'f'){
+
+		recoverySelect_t event = MAIN;
+		enable_mosfet(event);
+		sprintf(output,"MAIN DEPLOYMENT CIRCUIT IS NOW ARMED!.\n");
+		transmit_line(uart,output);
+
+		}
+	else if (command[0] == 'g'){
+
+			recoverySelect_t event = DROGUE;
+
+			sprintf(output,"DROGUE WILL FIRE IN %d SECONDS!.\n",delay/1000);
+			transmit_line(uart,output);
+
+			int time_left = delay;
+
+			while(time_left>0){
+
+				vTaskDelay(pdMS_TO_TICKS(1000));
+				time_left -= (1000);
+				sprintf(output,"DROGUE WILL FIRE IN %d SECONDS!.\n",time_left/1000);
+				transmit_line(uart,output);
+			}
+			activate_mosfet(event);
+		}
+	else if (command[0] == 'i'){
+
+		recoverySelect_t event = MAIN;
+
+		sprintf(output,"MAIN WILL FIRE IN %d SECONDS!.\n",delay/1000);
+		transmit_line(uart,output);
+
+		int time_left = delay;
+
+		while(time_left>0){
+
+			vTaskDelay(pdMS_TO_TICKS(1000));
+			time_left -= (1000);
+			sprintf(output,"MAIN WILL FIRE IN %d SECONDS!.\n",time_left/1000);
+			transmit_line(uart,output);
+		}
+			activate_mosfet(event);
+
+		}
+	else if (command[0] == 'j'){
+
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		if(value>5 && value<60){
+
+			delay = value *1000;
+			sprintf(output,"E-match fire delay set to %d.\n",value);
+			transmit_line(uart,output);
+		}
 
 		}
 
 
-	}
 
 }
 
@@ -215,6 +341,9 @@ void configure(char* command,xtractParams * params){
 						"\t[l] - set BMP388 IIR filter coefficient (1,3,7,15,31,63,127) \r\n"
 						"\t[m] - Read the current settings\r\n"
 						);
+
+	}
+	else if (strcmp(command,"return")==0){
 
 	}
 	else if (command[0] == 'a'){

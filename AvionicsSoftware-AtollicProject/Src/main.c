@@ -91,7 +91,7 @@ int main(void)
 	if(flash_stat != FLASH_OK){
 	  while(1);
 	}
-
+	transmit_line(&huart6_ptr,"Flash ID read successful\n");
 	//Initialize and get the flight computer parameters.
 
 	flightCompConfig.values.flash = &flash;
@@ -99,7 +99,7 @@ int main(void)
 	read_config(&flightCompConfig);
 
 	if(flightCompConfig.values.id != ID){
-
+		transmit_line(&huart6_ptr,"No config found in flash, reseting to default.\n");
 		init_config(&flightCompConfig);
 		write_config(&flightCompConfig);
 	}
@@ -113,8 +113,14 @@ int main(void)
 
 	uint32_t end_Address = scan_flash(&flash);
 	sprintf(lines,"end address :%ld \n",end_Address);
-	transmit_line(&huart6_ptr,lines);transmit_line(&huart6_ptr,lines);
+	transmit_line(&huart6_ptr,lines);
 
+	recovery_init();
+	transmit_line(&huart6_ptr,"Recovery GPIO pins setup.");
+
+	HAL_Delay(1000);
+	buzzerInit();
+	buzz(500);
 
 
 	logParams.flash_ptr = &flash;

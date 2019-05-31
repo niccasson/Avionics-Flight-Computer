@@ -20,6 +20,7 @@
 #include <stm32f4xx_hal_uart_io.h>
 
 #include "configuration.h"
+#include "recovery.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -31,7 +32,7 @@
 
 typedef enum{
 
-	MAIN,
+	MAIN_MENU,
 	READ,
 	CONFIG,
 	EMATCH,
