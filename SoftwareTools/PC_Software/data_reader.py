@@ -50,8 +50,10 @@ class SerialFunctions:
         self.file.close()
 
     def open_file(self,filename):
-        self.file = open(filename,'wb')
+        self.file = open(filename,'a+b')
         self.fileopen = True
+
+
 def list_COM_ports():
     """
     This function lists all available com ports and returns a list of the names.

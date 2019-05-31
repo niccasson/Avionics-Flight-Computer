@@ -16,6 +16,8 @@ def load_download():
 @bp.route('/DownloadData', methods=(['GET','POST']))
 def startDownload():
 
+    S = app.SerialPort
+
     data = request.get_data().decode('utf-8')
 
     jsonData = json.loads(str(data))
@@ -23,13 +25,19 @@ def startDownload():
     csvName = jsonData["csvName"]
     print(csvName)
 
-    app.SerialPort.close_file()
-    f = open(app.globalData['currentLogFile'], 'r')
-    print(f)
-    lines = f.readlines()
-    print(lines)
-    for line in lines:
-        print(line)
+    logName = jsonData["logName"]
+    print(logName)
+
+    S.close_file()
+    # f = open(app.globalData['currentLogFile'], 'r')
+    # print(f)
+    # lines = f.readlines()
+    # print(lines)
+    # for line in lines:
+    #     print(line)
+    S.open_file(logName)
+    S.write("read")
+
 
 
     return jsonify("downloading data.")
