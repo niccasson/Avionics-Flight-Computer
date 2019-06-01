@@ -56,16 +56,16 @@ struct bmi08x_dev bmi088dev = {
 // Returns:
 //  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-
-void delay(uint32_t period);
-
-//configures the accelerometer with hard-coded specifications
-int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
-
-//configures the gyroscope with hard-coded specifications
-int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+//int8_t user_spi_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+//int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+//
+//void delay(uint32_t period);
+//
+////configures the accelerometer with hard-coded specifications
+//int8_t accel_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
+//
+////configures the gyroscope with hard-coded specifications
+//int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -81,6 +81,8 @@ void vTask_sensorAG(void *param){
 	ImuTaskStruct * params = (ImuTaskStruct *)param;
 	QueueHandle_t  queue = params->imu_queue;
 	UART_HandleTypeDef * uart_ptr = params->huart;
+
+	configData_t * configParams = params->flightCompConfig;
 
 
 	TickType_t prevTime;
@@ -102,7 +104,7 @@ void vTask_sensorAG(void *param){
 	}
 
 	//configure accelerometer
-	rslt = accel_config(&bmi088dev, rslt);
+	rslt = accel_config(&bmi088dev,configParams, rslt);
 
 	if(rslt == BMI08X_OK){
 
@@ -115,7 +117,7 @@ void vTask_sensorAG(void *param){
 	}
 
 	//configure gyroscope
-	rslt = gyro_config(&bmi088dev, rslt);
+	rslt = gyro_config(&bmi088dev,configParams, rslt);
 	if(rslt == BMI08X_OK){
 
 		//transmit_line(uart_ptr,"GYRO CONFIG SUCCESS!");
@@ -145,13 +147,13 @@ void vTask_sensorAG(void *param){
 		//sprintf(data_str,"i %d",dataStruct.time_ticks);
 		//transmit_line(uart_ptr,data_str);
 
-		vTaskDelayUntil(&prevTime,DATA_RATE);
+		vTaskDelayUntil(&prevTime,configParams->values.data_rate);
 	}
 }
 
 
 //set the accelerometer starting configurations
-int8_t accel_config(struct bmi08x_dev *dev, int8_t rslt){
+int8_t accel_config(struct bmi08x_dev *dev,configData_t * configParams, int8_t rslt){
 	uint8_t data = 0;
 
 	//not sure if necessary
@@ -174,10 +176,10 @@ int8_t accel_config(struct bmi08x_dev *dev, int8_t rslt){
 
 	/* Assign the desired configurations */
 	//Not sure yet what configurations we want
-	dev->accel_cfg.bw = BMI08X_ACCEL_BW_NORMAL;
-	dev->accel_cfg.odr = BMI08X_ACCEL_ODR_100_HZ;
-	dev->accel_cfg.range = BMI088_ACCEL_RANGE_12G;
-	dev->accel_cfg.power = BMI08X_ACCEL_PM_ACTIVE;
+	dev->accel_cfg.bw = configParams->values.ac_bw;
+	dev->accel_cfg.odr = configParams->values.ac_odr;
+	dev->accel_cfg.range = configParams->values.ac_range;
+	dev->accel_cfg.power = configParams->values.ac_pwr;
 
 	rslt = bmi08a_set_power_mode(dev);
 	/* Wait for 10ms to switch between the power modes - delay taken care inside the function*/
@@ -188,7 +190,7 @@ int8_t accel_config(struct bmi08x_dev *dev, int8_t rslt){
 }
 
 //set the accelerometer starting configurations
-int8_t gyro_config(struct bmi08x_dev *dev, int8_t rslt){
+int8_t gyro_config(struct bmi08x_dev *dev,configData_t * configParams, int8_t rslt){
 	uint8_t data = 0;
 
 	//not sure if necessary
@@ -200,14 +202,14 @@ int8_t gyro_config(struct bmi08x_dev *dev, int8_t rslt){
 	}
 
 	//set power mode
-	dev->gyro_cfg.power = BMI08X_GYRO_PM_NORMAL;
+	dev->gyro_cfg.power = configParams->values.gy_pwr;
 	rslt = bmi08g_set_power_mode(dev);
 	/* Wait for 30ms to switch between the power modes - delay taken care inside the function*/
 
 	/* Assign the desired configurations */
-	dev->gyro_cfg.odr = BMI08X_GYRO_BW_23_ODR_200_HZ;
-	dev->gyro_cfg.range = BMI08X_GYRO_RANGE_1000_DPS;
-	dev->gyro_cfg.bw = BMI08X_GYRO_BW_23_ODR_200_HZ;
+	dev->gyro_cfg.odr = configParams->values.gy_odr;
+	dev->gyro_cfg.range = configParams->values.gy_range;
+	dev->gyro_cfg.bw = configParams->values.gy_bw;
 
 	rslt = bmi08g_set_meas_conf(dev);
 

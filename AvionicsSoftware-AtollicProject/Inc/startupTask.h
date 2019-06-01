@@ -45,6 +45,7 @@ typedef struct{
 
 	  FlashStruct_t * flash_ptr;
 	  UART_HandleTypeDef * huart_ptr;
+	  configData_t * flightCompConfig;
 
 }startParams;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -33,6 +33,7 @@
 #define		PP_COMMAND				0x02		//Page Program Command (write)
 #define		READ_COMMAND			0x03
 #define 	ERASE_SEC_COMMAND		0xD8
+#define 	ERASE_PARAM_SEC_COMMAND 0x20
 #define		GET_STATUS_REG_COMMAND	0x05
 #define		BULK_ERASE_COMMAND		0x60		//Command to erase the whole device.
 
@@ -45,8 +46,13 @@
 #define		MID_BYTE_MASK_24B		0x0000FF00
 #define 	LOW_BYTE_MASK_24B		0x000000FF
 
-#define 	FLASH_START_ADDRESS		0x00000000
-#define		FLASH_SIZE_BYTES		8000000
+#define 	FLASH_PAGE_SIZE			256
+#define 	FLASH_PARAM_SECTOR_SIZE (FLASH_PAGE_SIZE*16)
+#define		FLASH_SECTOR_SIZE		(FLASH_PAGE_SIZE*64)
+#define 	FLASH_START_ADDRESS		(0x00000000+FLASH_PARAM_SECTOR_SIZE)
+#define		FLASH_SIZE_BYTES		(8000000-FLASH_PARAM_SECTOR_SIZE)
+#define 	FLASH_PARAM_END_ADDRESS (0x0001FFFF)
+#define 	FLASH_END_ADDRESS		(0x7FFFFF)
 
 //Status Reg. Bits
 #define 	P_ERR_BIT				0x06		//Programming Error Bit.
@@ -152,6 +158,19 @@ FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
+//  This erases a specified parameter sector(4 kb) in the flash memory. Theses are located at the start(0x00000000) of the address space.
+//	Will take up to 2 seconds.
+//	The address can be any address in the desired sector.
+//
+//	If the device is busy the function exits early and returns FLASH_BUSY.
+//
+// Returns:
+//  Returns a status. Will be FLASH_BUSY if there is another operation in progress, FLASH_OK otherwise.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+FlashStatus_t 	erase_param_sector(FlashStruct_t * flash,uint32_t address);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
 //  This erases the whole flash memory. Will take up to 128 seconds.
 //
 //	If the device is busy the function exits early and returns FLASH_BUSY.
@@ -170,5 +189,15 @@ FlashStatus_t 	erase_device(FlashStruct_t * flash);
 //  The status register value (8 bits).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t get_status_reg(FlashStruct_t * flash);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  This returns the address of the first empty page in memory.
+//	Assumes continuous block of memory used.
+//
+// Returns:
+//  The address  (32 bits).
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+uint32_t scan_flash(FlashStruct_t * flash);
 
 #endif // TEMPLATE_H

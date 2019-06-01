@@ -101,6 +101,31 @@ FlashStatus_t 	erase_sector(FlashStruct_t * flash,uint32_t address){
 	return result;
 }
 
+FlashStatus_t 	erase_param_sector(FlashStruct_t * flash,uint32_t address){
+
+	FlashStatus_t result = FLASH_ERROR;
+
+	uint8_t status_reg = get_status_reg(flash);
+
+
+	if(IS_DEVICE_BUSY(status_reg)){
+
+		result = FLASH_BUSY;
+	}
+	else{
+
+		enable_write(flash);
+
+		uint8_t command_address [] = { ERASE_PARAM_SEC_COMMAND, (address & (HIGH_BYTE_MASK_24B))>>16, (address & (MID_BYTE_MASK_24B))>>8, address & (LOW_BYTE_MASK_24B)};
+
+		spi_send(flash->hspi,command_address,4,NULL,0,10);
+
+		result = FLASH_OK;
+	}
+	return result;
+}
+
+
 FlashStatus_t 	erase_device(FlashStruct_t * flash){
 
 	FlashStatus_t result = FLASH_ERROR;
@@ -234,5 +259,45 @@ FlashStatus_t		initialize_flash(FlashStruct_t * flash){
 	result = check_flash_id(flash);
 
 	return result;
+}
+
+uint32_t scan_flash(FlashStruct_t * flash){
+
+
+	uint32_t result = 0;
+
+	uint8_t dataRX[256];
+	uint32_t i;
+	int j;
+	i=FLASH_START_ADDRESS;
+	while(i<FLASH_SIZE_BYTES){
+
+		FlashStatus_t stat;
+
+		for(j=0;j<256;j++){
+			dataRX[j] = 0;
+		}
+
+		stat = read_page(flash,i,dataRX,256);
+
+		uint16_t empty= 0xFFFF;
+		for(j=0;j<256;j++){
+
+			if(dataRX[j] != 0xFF){
+				empty --;
+			}
+		}
+
+		if(empty == 0xFFFF){
+
+			result = i;
+			break;
+		}
+
+		i = i + 256;
+	}
+
+	return result;
+
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

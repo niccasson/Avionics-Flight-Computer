@@ -49,7 +49,7 @@ static bmp3_sensor* static_bmp3_sensor;
  *   - os_pres: oversampling rate for pressure
  *   - odr: output data rate
  */
-static uint8_t bmp3_config(uint8_t filter, uint8_t os_pres, uint8_t odr);
+static uint8_t bmp3_config(uint8_t filter, uint8_t os_pres,uint8_t os_temp, uint8_t odr);
 
 static void delay_ms(uint32_t period_ms);
 
@@ -112,7 +112,7 @@ int8_t get_sensor_data(struct bmp3_dev *dev, struct bmp3_data* data)
     return rslt;
 }
 
-static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
+static uint8_t bmp3_config(uint8_t iir,uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 	int8_t rslt;
 	struct bmp3_dev *dev = static_bmp3_sensor->bmp_ptr;
 
@@ -126,8 +126,9 @@ static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 	dev->settings.odr_filter.press_os = os_pres;
 	dev->settings.odr_filter.temp_os = os_temp;
 	dev->settings.odr_filter.odr = odr;
+	dev->settings.odr_filter.iir_filter = iir;
 	/* Assign the settings which needs to be set in the sensor */
-	settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL;
+	settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL| BMP3_IIR_FILTER_SEL;
 	rslt = bmp3_set_sensor_settings(settings_sel, dev);
 
 	/* Set the power mode to normal mode */
@@ -142,6 +143,8 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
 	PressureTaskParams * params = (PressureTaskParams *) pvParameters;
 	QueueHandle_t bmp_queue = params->bmp388_queue;
 	uart = params->huart;	//Get uart for printing to console
+	configData_t * configParams = params->flightCompConfig;
+
 
 	int8_t rslt;
 
@@ -157,7 +160,8 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
 	bmp3_print_rslt("init_bmp3_sensor", rslt);
 
     /* Configuration */
-	rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
+	//rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15,BMP3_OVERSAMPLING_4X, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
+	rslt = bmp3_config(configParams->values.iir_coef,configParams->values.pres_os, configParams->values.temp_os, configParams->values.bmp_odr);
 
 	prevTime =xTaskGetTickCount();
 

@@ -1,0 +1,32 @@
+<!doctype html>
+<title>{% block title %}{% endblock %} - UMSATS Rocketry</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1>UMSATS Rocketry Flight Computer</h1>
+  <ul>
+  </ul>
+</nav>
+<section class="content">
+  <header>
+<script src="../static/jquery.js"></script>
+      <div class="topnav">
+          <ul>
+
+           <li> <a class="active" href="/">Home</a></li>
+            <li> <a href="/Configure">Configure</a></li>
+            <li> <a href="/Download">Download Data</a></li>
+            <li> <a href="/Visualize">Visualize</a></li>
+
+          </ul>
+    </div>
+
+    {% block header %}{% endblock %}
+  </header>
+  {% for message in get_flashed_messages() %}
+    <div class="flash">{{ message }}</div>
+  {% endfor %}
+  {% block content %}
+
+  {% endblock %}
+
+</section>

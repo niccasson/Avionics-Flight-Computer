@@ -1,66 +1,55 @@
-#ifndef PRESSURE_SENSOR_BMP3_H
-#define PRESSURE_SENSOR_BMP3_H
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// pressure_sensor_bmp3.h
-// UMSATS 2018-2020
+// UMSATS Rocketry 2019
 //
 // Repository:
-//  UMSATS > Avionics 2019
+//  UMSATS/Avionics
 //
 // File Description:
-//  Control and usage of BMP3 sensor inside of RTOS task.
+//  Header file for functions related to recovery ignition circuit.
 //
 // History
-// 2019-03-04 Eric Kapilik
+// 2019-05-29 by Joseph Howarth
 // - Created.
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#ifndef RECOVERY_H
+#define RECOVERY_H
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include "bmp3.h"
-#include "stm32f4xx_hal_uart_io.h"
 #include "cmsis_os.h"
-#include "task.h"
-#include "SPI.h"
-#include "configuration.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#define TIMEOUT 100 // milliseconds
+
+#define EMATCH_ON_TIME		100
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+typedef enum {
+	DROGUE,
+	MAIN
 
+} recoverySelect_t;
+
+typedef enum{
+
+	OPEN_CIRCUIT,
+	SHORT_CIRCUIT
+
+}continuityStatus_t;
+
+typedef enum{
+
+	NO_OVERCURRENT,
+	OVERCURRENT
+}overcurrentStatus_t;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STRUCTS AND STRUCT TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Keep SPI connection and BMP sensor struct together
-struct bmp3_sensor_struct{
-	struct bmp3_dev* bmp_ptr;
-	SPI_HandleTypeDef* hspi_ptr;
-};
-typedef struct bmp3_sensor_struct bmp3_sensor;
-
-//Groups a time stamp with the reading.
-typedef struct {
-
-	struct bmp3_data data;
-	uint32_t time_ticks; //time of sensor reading in ticks.
-
-} bmp_data_struct;
-
-//Parameters for vTask_pressure_sensor_bmp3.
-typedef struct{
-
-	UART_HandleTypeDef * huart;
-	QueueHandle_t	bmp388_queue;
-	configData_t *flightCompConfig;
-
-} PressureTaskParams;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // TYPEDEFS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,49 +58,58 @@ typedef struct{
 // CONSTANTS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTION PROTOTYPES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Task for testing the BMP3 sensor.
-//    - initializes sensor
-//    - read data & print to UART screen cycle
+//  Sets up the GPIO pins for the recovery functions.
 //
 // Returns:
-//  VOID
+//  Enter description of return values (if any).
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void vTask_pressure_sensor_bmp3(void *pvParameters);
+void recovery_init();
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Initialize BMP3 sensor and be ready to read via SPI 4w.
-//  Also performs unit self test.
-// *Based off of https://github.com/BoschSensortec/BMP3_driver/blob/master/examples/basic.c
+//  Enables the mosfet driver for the specified recovery event .
 //
 // Returns:
-//  0 if no errors.
+//
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t init_bmp3_sensor(bmp3_sensor* bmp3_sensor_ptr);
+void enable_mosfet(recoverySelect_t recov_event);
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
-//  Captures pressure and temperature reading (64 bit precision) from BMP3 sensor.
-// NOTE:
-//  The sensor that this function will get measurements from is the one that was passed in via init_bmp3_sensor
+//  Activates the mosfet driver for the specified recovery event.
+//	The driver will be activated for the number of ms specified by the constant EMATCH_ON_TIME.
+//  The driver will be disabled after and must be re-enabled be fore every call of this function.
 //
 // Returns:
-//  0 if success
+//
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t get_sensor_data(struct bmp3_dev *dev, struct bmp3_data* data);
+void activate_mosfet(recoverySelect_t recov_event);
 
-/*!
- *  @brief Prints the execution status of the APIs.
- *
- *  @param[in] api_name : name of the API whose execution status has to be printed.
- *  @param[in] rslt     : error code returned by the API whose execution status has to be printed.
- *
- *  @return void.
- */
-void bmp3_print_rslt(const char api_name[], int8_t rslt);
-#endif // PRESSURE_SENSOR_BMP3_H
+
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Checks the continuity for the specified recovery circuit .
+//
+// Returns:
+//	A continuityStatus_t of OPEN_CIRCUIT or SHORT_CIRCUIT.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+continuityStatus_t check_continuity(recoverySelect_t recov_event);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
+//  Checks the overcurrent flag for the specified recovery circuit .
+//
+// Returns:
+//	A continuityStatus_t of NO_OVERCURRENT or OVERCURRENT.
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+overcurrentStatus_t check_overcurrent(recoverySelect_t recov_event);
+
+#endif // RECOVERY_H
