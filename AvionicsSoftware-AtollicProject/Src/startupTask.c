@@ -85,16 +85,27 @@ static void eraseFlash(startParams * params){
 
 		  transmit_line(huart,"flash not empty.");
 		  //Erase the whole flash. This could take up to 2 minutes.
-	  	  stat = erase_device(flash);
+	  	  //stat = erase_device(flash);
+		  uint32_t address = FLASH_START_ADDRESS;
 
-	  	  //Wait for erase to finish
-	  	  while(IS_DEVICE_BUSY(stat)){
+		  while(address < config->values.end_data_address){
 
-	  		  stat = get_status_reg(flash);
+			  if(address>FLASH_PARAM_END_ADDRESS){
+			  stat = erase_sector(flash,address);
+			  }
+			  else{
+				  stat = erase_param_sector(flash,address);
+			  }
+			  //Wait for erase to finish
+			  while(IS_DEVICE_BUSY(stat)){
 
-	  		  HAL_Delay(1);
-	  	  }
+				  stat = get_status_reg(flash);
 
+				  HAL_Delay(1);
+			  }
+
+			  address += FLASH_SECTOR_SIZE;
+		  }
 		  read_page(flash,FLASH_START_ADDRESS,dataRX,256);
 		  uint16_t empty = 0xFFFF;
 

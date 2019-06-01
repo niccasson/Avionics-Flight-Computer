@@ -98,6 +98,10 @@ int main(void)
 
 	read_config(&flightCompConfig);
 
+	char lines[50];
+	sprintf(lines,"ID :%d \n",flightCompConfig.values.id);
+	transmit_line(&huart6_ptr,lines);
+
 	if(flightCompConfig.values.id != ID){
 		transmit_line(&huart6_ptr,"No config found in flash, reseting to default.\n");
 		init_config(&flightCompConfig);
@@ -106,14 +110,11 @@ int main(void)
 
 	read_config(&flightCompConfig);
 
-	char lines[50];
-	sprintf(lines,"ID :%d \n",flightCompConfig.values.id);
-	transmit_line(&huart6_ptr,lines);
-
 
 	uint32_t end_Address = scan_flash(&flash);
 	sprintf(lines,"end address :%ld \n",end_Address);
 	transmit_line(&huart6_ptr,lines);
+	flightCompConfig.values.end_data_address = end_Address;
 
 	recovery_init();
 	transmit_line(&huart6_ptr,"Recovery GPIO pins setup.");

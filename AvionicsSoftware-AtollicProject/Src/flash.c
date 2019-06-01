@@ -267,7 +267,7 @@ uint32_t scan_flash(FlashStruct_t * flash){
 	uint32_t result = 0;
 
 	uint8_t dataRX[256];
-	int i;
+	uint32_t i;
 	int j;
 	i=FLASH_START_ADDRESS;
 	while(i<FLASH_SIZE_BYTES){
