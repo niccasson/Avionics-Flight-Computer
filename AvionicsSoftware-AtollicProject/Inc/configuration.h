@@ -30,7 +30,7 @@
 #define ID						0x5A
 
 #define DATA_RATE 				50
-#define INITIAL_WAIT_TIME 		5000			//in milliseconds
+#define INITIAL_WAIT_TIME 		10000			//in milliseconds
 #define FLAGS 					0x00			//default not in flight, not recording.
 #define DATA_START_ADDRESS		0x00001000		//Start writing to second page of memory.
 #define DATA_END_ADDRESS		0x00001000		//Assume no saved data.

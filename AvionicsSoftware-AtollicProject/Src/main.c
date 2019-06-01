@@ -147,6 +147,7 @@ int main(void)
 	tasks.bmpTask_h = NULL;
 	tasks.imuTask_h = NULL;
 	tasks.xtractTask_h = NULL;
+	xtractParameters.startupTaskHandle = NULL;
 
 	tasks.flash_ptr = &flash;
 	tasks.huart_ptr = &huart6_ptr;
@@ -225,7 +226,7 @@ int main(void)
 		 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
 		 (void*)&tasks,	/* function arguments */
 		 1,			 /* This task will run at priority 1. */
-		 NULL		 /* This example does not use the task handle. */
+		 &xtractParameters.startupTaskHandle		 /* This example does not use the task handle. */
 		  ) == -1){
 		Error_Handler();
 	}

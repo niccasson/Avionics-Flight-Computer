@@ -85,15 +85,13 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	UART_HandleTypeDef * uart = params->huart;
 	FlashStruct_t * flash = params->flash;
 	configData_t * config = params->flightCompConfig;
+	TaskHandle_t startupTaskHandle = params->startupTaskHandle;
 
 
 	char output[BUFFER_SIZE];
 
 	if(strcmp(command, "help") == 0 && *state == MAIN_MENU){
 		help(uart);
-	}
-	else if(strcmp(command, "start") == 0 && *state == MAIN_MENU){
-		//start();
 	}
 	else if((strcmp(command, "read") == 0 && *state == MAIN_MENU )|| *state == READ_MENU){
 		read(params);
@@ -131,6 +129,12 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	}
 	else if((strcmp(command, "save") == 0 && *state == MAIN_MENU )|| *state == SAVE_MENU){
 		write_config(config);
+
+	}
+	else if((strcmp(command, "start") == 0 && *state == MAIN_MENU )){
+
+		vTaskResume(startupTaskHandle);
+		vTaskSuspend(NULL);
 
 	}
 	else{
