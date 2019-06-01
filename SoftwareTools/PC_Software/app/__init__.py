@@ -42,6 +42,8 @@ def create_app(test_config=None):
     from . import common
     app.register_blueprint(common.bp)
 
+    if os.path.exists("./UMSATS_ROCKET.log"):
+        os.remove("./UMSATS_ROCKET.log")
 
     return app
 

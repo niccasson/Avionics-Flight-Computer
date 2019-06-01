@@ -45,14 +45,17 @@ class SerialFunctions:
     def close(self):
         self.s.close()
 
-    def close_file(self):
+    def close_log(self):
         self.fileopen = False
         self.file.close()
 
-    def open_file(self,filename):
+    def open_log(self,filename):
         self.file = open(filename,'a+b')
         self.fileopen = True
 
+    def flush(self):
+
+        self.s.flush()
 
 def list_COM_ports():
     """

@@ -1,3 +1,5 @@
+import time
+
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for,jsonify,json
 )
@@ -28,15 +30,24 @@ def startDownload():
     logName = jsonData["logName"]
     print(logName)
 
-    S.close_file()
+    S.close_log()
     # f = open(app.globalData['currentLogFile'], 'r')
     # print(f)
     # lines = f.readlines()
     # print(lines)
     # for line in lines:
     #     print(line)
-    S.open_file(logName)
-    S.write("read")
+    S.flush()
+    time.sleep(1)
+    S.write("return\r")
+    time.sleep(1)
+    S.open_log(logName)
+    time.sleep(1)
+    S.write("read\r")
+    time.sleep(2)
+    S.close_log()
+    time.sleep(1)
+    S.open_log('log.log')
 
 
 
