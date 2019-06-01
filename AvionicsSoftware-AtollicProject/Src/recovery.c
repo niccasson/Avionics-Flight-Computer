@@ -97,13 +97,36 @@ void enable_mosfet(recoverySelect_t recov_event){
 void activate_mosfet(recoverySelect_t recov_event){
 
 	if(recov_event == MAIN){
+
+		//Write pin low in case there was a fault.
+		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_RESET);
+
 		//Active high.
 		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_SET);
+
+		vTaskDelay(pdMS_TO_TICKS(EMATCH_ON_TIME));
+
+		//De-activate.
+		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_RESET);
+
+		//Disable driver.
+		HAL_GPIO_WritePin(RECOV_MAIN_ENABLE_PORT,RECOV_MAIN_ENABLE_PIN,GPIO_PIN_SET);
 	}
 	else if(recov_event == DROGUE){
 
+		//Write pin low in case there was a fault.
+		HAL_GPIO_WritePin(RECOV_DROGUE_ACTIVATE_PORT,RECOV_DROGUE_ACTIVATE_PIN,GPIO_PIN_RESET);
+
 		//Active high.
 		HAL_GPIO_WritePin(RECOV_DROGUE_ACTIVATE_PORT,RECOV_DROGUE_ACTIVATE_PIN,GPIO_PIN_SET);
+
+		vTaskDelay(pdMS_TO_TICKS(EMATCH_ON_TIME));
+
+		//De-activate.
+		HAL_GPIO_WritePin(RECOV_DROGUE_ACTIVATE_PORT,RECOV_DROGUE_ACTIVATE_PIN,GPIO_PIN_RESET);
+
+		//Disable driver.
+		HAL_GPIO_WritePin(RECOV_DROGUE_ENABLE_PORT,RECOV_DROGUE_ENABLE_PIN,GPIO_PIN_SET);
 	}
 }
 

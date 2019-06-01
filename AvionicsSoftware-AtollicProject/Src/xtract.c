@@ -55,6 +55,8 @@
 //    const void * param2  // Enter description of param2.
 //    );
 
+uint16_t delay_ematch_menu_fire = 10000;
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,34 +95,41 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	else if(strcmp(command, "start") == 0 && *state == MAIN_MENU){
 		//start();
 	}
-	else if((strcmp(command, "read") == 0 && *state == MAIN_MENU )|| *state == READ){
+	else if((strcmp(command, "read") == 0 && *state == MAIN_MENU )|| *state == READ_MENU){
 		read(params);
 	}
-	else if((strcmp(command, "config") == 0 && *state == MAIN_MENU )|| *state == CONFIG){
+	else if((strcmp(command, "config") == 0 && *state == MAIN_MENU )|| *state == CONFIG_MENU){
 
 		if(strcmp(command,"return")==0){
 			transmit_line(uart,"Returning to main menu");
 			*state = MAIN_MENU;
 		}else{
-			*state = CONFIG;
+			*state = CONFIG_MENU;
 		}
 		configure(command,params);
 	}
-	else if((strcmp(command, "ematch") == 0 && *state == MAIN_MENU) || *state == EMATCH){
-		*state = EMATCH;
+	else if((strcmp(command, "ematch") == 0 && *state == MAIN_MENU) || *state == EMATCH_MENU){
+		*state = EMATCH_MENU;
 		if(strcmp(command,"return")==0){
 			transmit_line(uart,"Returning to main menu");
 			*state = MAIN_MENU;
 		}else{
-			*state = EMATCH;
+			*state = EMATCH_MENU;
 		}
 		ematch(command,params);
 	}
-	else if((strcmp(command, "mem") == 0 && *state == MAIN_MENU )|| *state == MEM){
-		*state = 3;
+	else if((strcmp(command, "mem") == 0 && *state == MAIN_MENU )|| *state == MEM_MENU){
+		*state = MEM_MENU;
+		if(strcmp(command,"return")==0){
+			transmit_line(uart,"Returning to main menu");
+			*state = MAIN_MENU;
+		}else{
+			*state = MEM_MENU;
+		}
+		memory_menu(command,params);
 
 	}
-	else if((strcmp(command, "save") == 0 && *state == MAIN_MENU )|| *state == SAVE){
+	else if((strcmp(command, "save") == 0 && *state == MAIN_MENU )|| *state == SAVE_MENU){
 		write_config(config);
 
 	}
@@ -152,6 +161,103 @@ void help(UART_HandleTypeDef * uart){
 }
 
 
+void memory_menu(char* command, xtractParams * params){
+
+	UART_HandleTypeDef * uart = params->huart;
+	FlashStruct_t * flash = params->flash;
+	configData_t * config = params->flightCompConfig;
+
+	char output [256];
+	if(strcmp(command, "help") == 0 || strcmp(command, "mem") == 0){
+
+		transmit_line(uart, "Commands:\r\n"
+						"\t[help] - displays the help menu and more commands\r\n"
+						"\t[return] - Return to main menu\r\n"
+						"\t[a] - Read 256 bytes (hex address 0-7FFFFF).\r\n"
+						"\t[b] - Scan Memory\r\n"
+						"\t[c] - Erase data section\r\n"
+						"\t[d] - Erase config section.\r\n"
+						"\t[e] - Erase all flash memory.\r\n"
+						);
+
+	}
+	else if (strcmp(command,"return")==0){
+
+	}
+	else if (command[0] == 'a'){
+
+
+		char val_str[10];
+
+		strcpy(val_str,&command[1]);
+
+		uint32_t value = strtol(val_str,NULL,16);
+
+		if(value>=0 && value<= FLASH_END_ADDRESS){
+
+
+			sprintf(output,"Reading 256 bytes starting at address %ld ...",value);
+			transmit_line(uart,output);
+
+			uint8_t data_rx[FLASH_PAGE_SIZE];
+
+			FlashStatus_t stat;
+			stat = read_page(flash,value,data_rx,FLASH_PAGE_SIZE);
+
+			uint8_t busy = stat;
+
+			while(IS_DEVICE_BUSY(busy)){
+
+				busy = get_status_reg(flash);
+
+				vTaskDelay(pdMS_TO_TICKS(1));
+			}
+
+			if(stat == FLASH_OK){
+				sprintf(output,"Success:");
+			}
+			else{
+				sprintf(output,"Failed:");
+
+			}
+			transmit_line(uart,output);
+
+			int i;
+			for(i=0;i<FLASH_PAGE_SIZE;i++){
+
+
+				if((i+1)%16 == 0){
+					sprintf(output,"0x%02X ",data_rx[i]);
+					transmit_line(uart,output);
+				}
+				else{
+					sprintf(output,"0x%02X ",data_rx[i]);
+					transmit(uart,output);
+				}
+
+
+			}
+				transmit_line(uart,"\r\n");
+		}
+
+
+
+		}
+	else if (command[0] == 'b'){
+
+		}
+	else if (command[0] == 'c'){
+
+		}
+	else if (command[0] == 'd'){
+
+		}
+	else if (command[0] == 'f'){
+
+		}
+
+}
+
 void ematch(char* command, xtractParams * params){
 
 	UART_HandleTypeDef * uart = params->huart;
@@ -159,7 +265,7 @@ void ematch(char* command, xtractParams * params){
 	configData_t * config = params->flightCompConfig;
 
 	char output [256];
-	int delay = 10000;
+
 
 	if(strcmp(command, "help") == 0 || strcmp(command, "ematch") == 0){
 
@@ -260,10 +366,10 @@ void ematch(char* command, xtractParams * params){
 
 			recoverySelect_t event = DROGUE;
 
-			sprintf(output,"DROGUE WILL FIRE IN %d SECONDS!.\n",delay/1000);
+			sprintf(output,"DROGUE WILL FIRE IN %d SECONDS!.\n",delay_ematch_menu_fire/1000);
 			transmit_line(uart,output);
 
-			int time_left = delay;
+			int time_left = delay_ematch_menu_fire;
 
 			while(time_left>0){
 
@@ -278,10 +384,10 @@ void ematch(char* command, xtractParams * params){
 
 		recoverySelect_t event = MAIN;
 
-		sprintf(output,"MAIN WILL FIRE IN %d SECONDS!.\n",delay/1000);
+		sprintf(output,"MAIN WILL FIRE IN %d SECONDS!.\n",delay_ematch_menu_fire/1000);
 		transmit_line(uart,output);
 
-		int time_left = delay;
+		int time_left = delay_ematch_menu_fire;
 
 		while(time_left>0){
 
@@ -303,7 +409,7 @@ void ematch(char* command, xtractParams * params){
 
 		if(value>5 && value<60){
 
-			delay = value *1000;
+			delay_ematch_menu_fire = value *1000;
 			sprintf(output,"E-match fire delay set to %d.\n",value);
 			transmit_line(uart,output);
 		}

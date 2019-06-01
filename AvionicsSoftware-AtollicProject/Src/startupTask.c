@@ -101,7 +101,7 @@ static void eraseFlash(startParams * params){
 
 				  stat = get_status_reg(flash);
 
-				  HAL_Delay(1);
+				  vTaskDelay(pdMS_TO_TICKS(1));
 			  }
 
 			  address += FLASH_SECTOR_SIZE;
