@@ -44,7 +44,7 @@ def startDownload():
     S.open_log(logName)
     time.sleep(1)
     S.write("read\r")
-    time.sleep(2)
+    time.sleep(60)
     S.close_log()
     time.sleep(1)
     S.open_log('log.log')
