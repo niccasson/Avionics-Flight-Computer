@@ -52,6 +52,7 @@ void recovery_init(){
 	//Setup outputs.
 	GPIO_InitStruct.Pin       = RECOV_DROGUE_ACTIVATE_PIN|RECOV_DROGUE_ENABLE_PIN|RECOV_MAIN_ACTIVATE_PIN|RECOV_MAIN_ENABLE_PIN;
 	GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Speed	  = GPIO_SPEED_FREQ_VERY_HIGH;
 	HAL_GPIO_Init(RECOV_DROGUE_ACTIVATE_PORT,&GPIO_InitStruct);
 
 	//Set default state drogue.
@@ -104,7 +105,7 @@ void activate_mosfet(recoverySelect_t recov_event){
 		//Active high.
 		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_SET);
 
-		vTaskDelay(pdMS_TO_TICKS(EMATCH_ON_TIME));
+		vTaskDelay(EMATCH_ON_TIME);
 
 		//De-activate.
 		HAL_GPIO_WritePin(RECOV_MAIN_ACTIVATE_PORT,RECOV_MAIN_ACTIVATE_PIN,GPIO_PIN_RESET);
