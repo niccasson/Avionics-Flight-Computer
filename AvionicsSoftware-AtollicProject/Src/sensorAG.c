@@ -130,7 +130,7 @@ void vTask_sensorAG(void *param){
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 
 	//main loop: continuously read sensor data
-	vTaskDelay(pdMS_TO_TICKS(100));//Wait so to make sure the other tasks have started.
+	//vTaskDelay(pdMS_TO_TICKS(100));//Wait so to make sure the other tasks have started.
 
 	prevTime=xTaskGetTickCount();
 

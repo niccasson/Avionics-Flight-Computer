@@ -50,6 +50,18 @@
 #define TEMP_OS					BMP3_OVERSAMPLING_4X
 #define BMP_IIR					BMP3_IIR_FILTER_COEFF_15
 
+#define GND_ALT					0
+#define GND_PRES				101325
+
+
+#define STATE_XTRACT					0x01
+#define STATE_LAUNCHPAD					0x02
+#define STATE_LAUNCHPAD_ARMED			0x03
+#define STATE_IN_FLIGHT_PRE_APOGEE		0x04
+#define STATE_IN_FLIGHT_POST_APOGEE		0x05
+#define STATE_IN_FLIGHT_POST_MAIN		0x06
+#define STATE_LANDED					0x07
+
 //Macros to get flags.
 #define IS_IN_FLIGHT(x)		((x>>0)&0x01)
 #define	IS_RECORDING(x)		((x>>1)&0x01)
@@ -68,29 +80,34 @@ typedef enum{
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 typedef struct {
 
-	uint8_t  id;
-	uint32_t initial_time_to_wait;
-	uint8_t  data_rate;
-	uint8_t  flags;
-	uint32_t start_data_address;
-	uint32_t end_data_address;
+	uint8_t 	 id;
+	uint32_t	 initial_time_to_wait;
+	uint8_t 	 data_rate;
+	uint8_t 	 flags;
+	uint32_t	 start_data_address;
+	uint32_t	 end_data_address;
 
-	uint8_t	 ac_bw;
-	uint8_t  ac_odr;
-	uint8_t  ac_range;
-	uint8_t  ac_pwr;
+	uint8_t		 ac_bw;
+	uint8_t 	 ac_odr;
+	uint8_t  	 ac_range;
+	uint8_t  	 ac_pwr;
 
-	uint8_t	 gy_bw;
-	uint8_t  gy_odr;
-	uint8_t  gy_range;
-	uint8_t  gy_pwr;
+	uint8_t		 gy_bw;
+	uint8_t 	 gy_odr;
+	uint8_t 	 gy_range;
+	uint8_t 	 gy_pwr;
 
-	uint8_t  bmp_odr;
-	uint8_t  temp_os;
-	uint8_t  pres_os;
-	uint8_t  iir_coef;
+	uint8_t 	 bmp_odr;
+	uint8_t 	 temp_os;
+	uint8_t 	 pres_os;
+	uint8_t  	 iir_coef;
+
+	float	 ref_alt;
+	float 	 ref_pres;
+
 
 	FlashStruct_t * flash;
+	uint8_t state;
 
 }configDataStruct_t;
 

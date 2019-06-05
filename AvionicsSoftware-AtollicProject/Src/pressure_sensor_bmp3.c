@@ -137,6 +137,27 @@ static uint8_t bmp3_config(uint8_t iir,uint8_t os_pres, uint8_t os_temp, uint8_t
 
 	return rslt;
 }
+void init_bmp(configData_t * configParams){
+
+	bmp3_sensor* bmp3_sensor_ptr = malloc(sizeof(bmp3_sensor));
+	int8_t rslt;
+	rslt = init_bmp3_sensor(bmp3_sensor_ptr);
+	if(rslt != 0){
+		while(1){}
+	}
+	rslt = bmp3_config(configParams->values.iir_coef,configParams->values.pres_os, configParams->values.temp_os, configParams->values.bmp_odr);
+	if(rslt != 0){
+		while(1){}
+	}
+}
+
+void calibrate_bmp(configData_t * configParams){
+
+	bmp_data_struct dataStruct;
+	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+	configParams->values.ref_alt=0;
+	configParams->values.ref_pres = (uint32_t)dataStruct.data.pressure/100;
+}
 
 void vTask_pressure_sensor_bmp3(void *pvParameters){
 
@@ -162,9 +183,20 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
     /* Configuration */
 	//rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15,BMP3_OVERSAMPLING_4X, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
 	rslt = bmp3_config(configParams->values.iir_coef,configParams->values.pres_os, configParams->values.temp_os, configParams->values.bmp_odr);
-
+	if(rslt != 0){
+		while(1){}
+	}
 	prevTime =xTaskGetTickCount();
+	int i;
+	for(i=0;i<3;i++){
+		get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+		vTaskDelayUntil(&prevTime,configParams->values.data_rate);
+	}
 
+	if(!IS_IN_FLIGHT(configParams->values.flags)){
+		get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+
+	}
     while(1){
 
     	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
@@ -179,7 +211,7 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
     	//sprintf(buf, "Temperature: %ld [0.01 C]", (int32_t)dataStruct.data.temperature);
     	//transmit_line(uart, buf);
 
-    	vTaskDelayUntil(&prevTime,DATA_RATE*2);
+    	vTaskDelayUntil(&prevTime,configParams->values.data_rate);
     }
 }
 
@@ -197,6 +229,7 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
 static void delay_ms(uint32_t period_ms)
 {
     vTaskDelay((TickType_t) period_ms);
+	//HAL_Delay(period_ms);
 }
 
 /*!

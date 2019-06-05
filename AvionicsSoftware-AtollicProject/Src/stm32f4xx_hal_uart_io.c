@@ -181,20 +181,24 @@ char* receive_command(UART_HandleTypeDef* uart){
 		}
 
 		//print the character back.
-		if(HAL_UART_Transmit(uart, &c, sizeof(c), TIMEOUT_MAX) != HAL_OK){
-				//Do something meaningful here...
-		}
+		if(c != '\0'){
+
+			if(HAL_UART_Transmit(uart, &c, sizeof(c), TIMEOUT_MAX) != HAL_OK){
+					//Do something meaningful here...
+			}
 
 		//adjust our buffer
-		if(c == '\r'){ //return entered, command is complete
-			break;
-		}
-		else if(c == 127){ //User hits backspace, clear from buffer and display (backspace is \177 or 127)
-			if(i > 0){ i--; } //don't let i become negative
-			buffrx[i] = '\0';
-		}
-		else{ //add character to end of receive buffer
-			buffrx[i++] = c;
+			if(c == '\r'){ //return entered, command is complete
+				break;
+			}
+			else if(c == 127){ //User hits backspace, clear from buffer and display (backspace is \177 or 127)
+				if(i > 0){ i--; } //don't let i become negative
+				buffrx[i] = '\0';
+			}
+			else{ //add character to end of receive buffer
+				buffrx[i++] = c;
+			}
+
 		}
 	}
 

@@ -82,7 +82,7 @@ void loggingTask(void * params){
 
 	uint32_t prev_time_ticks = 0;	//Holds the previous time to calculate the change in time.
 
-
+	char buf[120];
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 
@@ -99,6 +99,7 @@ void loggingTask(void * params){
 	bmp_data_struct	bmp_reading;
 
 	prev_time_ticks = xTaskGetTickCount();
+	alt_value altitude;
 
 	while(1){
 
@@ -119,7 +120,7 @@ void loggingTask(void * params){
 
 				uint16_t delta_t = imu_reading.time_ticks-prev_time_ticks;
 
-				uint16_t header  = (ACC_TYPE | GYRO_TYPE) + (delta_t & 0x0FFF);// Make sure time doesn't overwrite type bits.
+				uint32_t header  = (ACC_TYPE | GYRO_TYPE) + (delta_t & 0x0FFF);// Make sure time doesn't overwrite type and event bits.
 
 				measurement.data[0] = header& 0x00FF;
 				measurement.data[1] = header>>8;
@@ -128,23 +129,23 @@ void loggingTask(void * params){
 
 				prev_time_ticks = imu_reading.time_ticks;
 
-				measurement.data[2] = ((uint16_t)imu_reading.data_acc.x) >>8;
-				measurement.data[3] = ((uint16_t)imu_reading.data_acc.x) & 0xFF;
+				measurement.data[3] = ((uint16_t)imu_reading.data_acc.x) >>8;
+				measurement.data[4] = ((uint16_t)imu_reading.data_acc.x) & 0xFF;
 
-				measurement.data[4] = ((uint16_t)imu_reading.data_acc.y) >>8;
-				measurement.data[5] = ((uint16_t)imu_reading.data_acc.y) & 0xFF;
+				measurement.data[5] = ((uint16_t)imu_reading.data_acc.y) >>8;
+				measurement.data[6] = ((uint16_t)imu_reading.data_acc.y) & 0xFF;
 
-				measurement.data[6] = ((uint16_t)imu_reading.data_acc.z) >>8;
-				measurement.data[7] = ((uint16_t)imu_reading.data_acc.z) & 0xFF;
+				measurement.data[7] = ((uint16_t)imu_reading.data_acc.z) >>8;
+				measurement.data[8] = ((uint16_t)imu_reading.data_acc.z) & 0xFF;
 
-				measurement.data[8] = ((uint16_t)imu_reading.data_gyro.x) >>8;
-				measurement.data[9] = ((uint16_t)imu_reading.data_gyro.x) & 0xFF;
+				measurement.data[9] = ((uint16_t)imu_reading.data_gyro.x) >>8;
+				measurement.data[10] = ((uint16_t)imu_reading.data_gyro.x) & 0xFF;
 
-				measurement.data[10] = ((uint16_t)imu_reading.data_gyro.y) >>8;
-				measurement.data[11] = ((uint16_t)imu_reading.data_gyro.y) & 0xFF;
+				measurement.data[11] = ((uint16_t)imu_reading.data_gyro.y) >>8;
+				measurement.data[12] = ((uint16_t)imu_reading.data_gyro.y) & 0xFF;
 
-				measurement.data[12] = ((uint16_t)imu_reading.data_gyro.z) >>8;
-				measurement.data[13] = ((uint16_t)imu_reading.data_gyro.z) & 0xFF;
+				measurement.data[13] = ((uint16_t)imu_reading.data_gyro.z) >>8;
+				measurement.data[14] = ((uint16_t)imu_reading.data_gyro.z) & 0xFF;
 
 
 			}
@@ -155,9 +156,7 @@ void loggingTask(void * params){
 
 		/* BMP READING*******************************************************************************************************************************/
 		//Try and get data from the BMP queue. Block for up to a quarter of the time between the fastest measurement.
-		stat = xQueueReceive(logStruct->PRES_data_queue,&bmp_reading,configParams->values.data_rate
-
-				/4);
+		stat = xQueueReceive(logStruct->PRES_data_queue,&bmp_reading,configParams->values.data_rate/4);
 
 		if(stat == pdPASS){
 
@@ -175,18 +174,30 @@ void loggingTask(void * params){
 				measurement.data[1] =(header)>>8;
 
 
-				measurement.data[14]= (((uint32_t)bmp_reading.data.pressure) >>16) &0xFF ;	//MSB
-				measurement.data[15]= (((uint32_t)bmp_reading.data.pressure) >> 8) & 0xFF;	//LSB
-				measurement.data[16]= ((uint32_t)bmp_reading.data.pressure) & 0xFF;		//XLSB
+				measurement.data[15]= (((uint32_t)bmp_reading.data.pressure) >>16) &0xFF ;	//MSB
+				measurement.data[16]= (((uint32_t)bmp_reading.data.pressure) >> 8) & 0xFF;	//LSB
+				measurement.data[17]= ((uint32_t)bmp_reading.data.pressure) & 0xFF;		//XLSB
 
-				measurement.data[17]= (((uint32_t)bmp_reading.data.temperature) >>16) & 0xFF;	//MSB
-				measurement.data[18]= ((uint32_t)bmp_reading.data.temperature >> 8) & 0xFF;	//LSB
-				measurement.data[19]= (uint32_t)bmp_reading.data.temperature & 0xFF; //XLSB
+				measurement.data[18]= (((uint32_t)bmp_reading.data.temperature) >>16) & 0xFF;	//MSB
+				measurement.data[19]= ((uint32_t)bmp_reading.data.temperature >> 8) & 0xFF;	//LSB
+				measurement.data[20]= (uint32_t)bmp_reading.data.temperature & 0xFF; //XLSB
+
+		    	altitude = altitude_approx((float)bmp_reading.data.pressure, (float)bmp_reading.data.temperature,configParams);
+		    	measurement.data[21] = altitude.byte_val & 0xFF000000;
+		    	measurement.data[22] = altitude.byte_val & 0x00FF0000;
+		    	measurement.data[23] = altitude.byte_val & 0x0000FF00;
+		    	measurement.data[24] = altitude.byte_val & 0x000000FF;
+		    	int16_t alt_int = altitude.float_val;
+		    	int16_t alt_dec = (altitude.float_val*100)-(alt_int*100);
+
+		    	sprintf(buf, "Pressure: %ld [Pa]\tTemperature: %ld [0.01 C]\tAltitude: %d.%d [m]", (uint32_t)bmp_reading.data.pressure,(uint32_t) bmp_reading.data.temperature, alt_int,alt_dec);
+		    	transmit_line(huart, buf);
 
 			}
 
 
 		}
+
 
 
 		/* Fill Buffer and/or write to flash*********************************************************************************************************/

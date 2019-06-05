@@ -154,6 +154,7 @@ int main(void)
 	tasks.flightCompConfig = &flightCompConfig;
 
 
+	//init_bmp(&flightCompConfig);
 	//testIMU();
 	//testpress();
 	// testFlash(&flash);

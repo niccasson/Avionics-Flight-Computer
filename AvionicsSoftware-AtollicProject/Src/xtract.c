@@ -450,6 +450,7 @@ void configure(char* command,xtractParams * params){
 						"\t[k] - set temperature oversampling (0,2,4,8,16,32) \r\n"
 						"\t[l] - set BMP388 IIR filter coefficient (1,3,7,15,31,63,127) \r\n"
 						"\t[m] - Read the current settings\r\n"
+						"\t[n] - Calibrate altitude\r\n"
 						);
 
 	}
@@ -969,8 +970,16 @@ void configure(char* command,xtractParams * params){
 		sprintf(output,"start of data: %ld \tend of data: %ld \r\n",config->values.start_data_address,config->values.end_data_address);
 		transmit_line(uart,output);
 
-		sprintf(output,"accelerometer bandwidth: %d \t accelerometer data rate: %d \r\n",config->values.ac_bw,config->values.ac_odr);
+		sprintf(output,"reference altitude: %ld \t reference pressure: %ld \r\n",(uint32_t)config->values.ref_alt,(uint32_t)config->values.ref_pres);
 		transmit_line(uart,output);
+
+	}
+	else if (command[0] == 'n'){
+
+		calibrate_bmp(config);
+		sprintf(output,"Calibrated altitude calculation!\n");
+		transmit_line(uart,output);
+
 
 	}
 	else{
@@ -994,7 +1003,7 @@ void read(xtractParams * params){
 	uint32_t bytesRead = 0;
 	uint32_t currentAddress = FLASH_START_ADDRESS;
 
-	vTaskDelay(pdMS_TO_TICKS(1000*20));	//Delay 10 seconds
+	vTaskDelay(pdMS_TO_TICKS(1000*10));	//Delay 10 seconds
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 	while (bytesRead < scan_flash(flash)){
