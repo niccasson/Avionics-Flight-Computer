@@ -5,10 +5,48 @@ document.getElementById("ConnectSerialButton").addEventListener("click",connectF
 document.getElementById("refreshTerminalBtn").addEventListener("click",refreshTerminal);
 
 
-
+var comPortGlobal;
 
 getComPorts();
 
+
+function on_refresh(){
+ $.ajax({
+        type: 'get',
+        url: '/readGlobal',
+        success: function (data) {
+            data = JSON.parse(data);
+            var serialState = data["serialOpen"];
+
+            var connectButton =document.getElementById("ConnectSerialButton");
+        if(serialState == true){
+                connectButton.value = "Disconnect";
+            }
+        else{
+                connectButton.value = "Connect";
+        }
+
+        var baudrate = data["baudRate"];
+        var baudRateBox = document.getElementById("baudEntry");
+        baudRateBox.value = baudrate;
+
+        var comPort = data["comPort"];
+        var comBox = document.getElementById("comPortList");
+
+        for (var i = 0;i < comBox.options.length;  i++)
+            {
+                console.log(comBox.options[i].value+" | "+comPort);
+                if (comBox.options[i].value == comPort) {
+                    comBox.options[i].selected = true;
+                    console.log("comport match");
+                }
+            }
+        window.comPortGlobal = comPort;
+
+        console.log("Refresh: serial state -> "+serialState+ " baudrate -> "+baudrate+ " comPort -> "+comPort);
+    }
+ });
+}
 function refreshTerminal(){
 
     var dsp = document.getElementById("term_dsp");
@@ -77,13 +115,14 @@ function connectFunc(e){
                                 if (data['res'] == 1) {
                                     var button = document.getElementById("ConnectSerialButton");
                                     button.value = "Disconnect";
+                                    window.serial_state_global = true;
                                     console.log("Connected");
 
 
                                     $.ajax({
                                             type: 'post',
                                             url: '/writeGlobal',
-                                            data: JSON.stringify({"serialOpen":true}),
+                                            data: JSON.stringify({"serialOpen":true,"comPort": comPort,"baudRate":baudRate}),
                                             success: function () {
                                             }
                                     });
@@ -105,11 +144,12 @@ function connectFunc(e){
 
                     var button = document.getElementById("ConnectSerialButton");
                     button.value = "Connect";
+                    window.serial_state_global = false;
                     // serialState = false;
                     $.ajax({
                         type: 'post',
                         url: '/writeGlobal',
-                        data: JSON.stringify({"serialOpen":false}),
+                        data: JSON.stringify({"serialOpen":false,"comPort": "","baudRate":""}),
                         success: function () {}
                      });
                 }
@@ -120,7 +160,7 @@ function connectFunc(e){
         });
 
 
-
+    console.log(window.serial_state_global);
 }
 
 
@@ -232,7 +272,10 @@ function getComPorts(){
                         comList.appendChild(option);
                     }
                     //radioFormName.appendChild(comList);
+                     on_refresh();
                 }
             }
           });
+
+
 }

@@ -174,7 +174,8 @@ input[type=submit] { align-self: start; min-width: 10em; }
 }
 
 .main_button {
-    margin: 0 auto;
+
+    margin: 10px auto;
     text-align: center;
     display: block;
     width: 50%;

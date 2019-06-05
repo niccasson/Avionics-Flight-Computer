@@ -1,3 +1,4 @@
+import subprocess
 import time
 
 from flask import (
@@ -6,6 +7,8 @@ from flask import (
 
 import serialReader
 import data_reader
+import generate_plotly
+from app.dashboard import  terminal_in
 
 bp = Blueprint('download', __name__)
 import app
@@ -44,11 +47,19 @@ def startDownload():
     S.open_log(logName)
     time.sleep(1)
     S.write("read\r")
-    time.sleep(60)
+
+    return jsonify("downloading data.")
+
+@bp.route('/StopDownloadData', methods=(['GET']))
+def stopDownload():
+
+    terminal_in()
+    S = app.SerialPort
     S.close_log()
     time.sleep(1)
     S.open_log('log.log')
 
+    return_code = subprocess.call("data_parser.exe")
+    generate_plotly.plot_data()
 
-
-    return jsonify("downloading data.")
+    return jsonify("Done downloading data.")

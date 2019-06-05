@@ -67,6 +67,7 @@ def terminal_out():
     data = request.get_data().decode('utf-8')
 
     cmd = json.loads(str(data))['text']
+
     print("Sending: {}".format(cmd))
     S = app.SerialPort
     S.write(cmd)
