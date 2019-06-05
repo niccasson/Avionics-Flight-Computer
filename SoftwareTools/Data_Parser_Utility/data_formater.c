@@ -82,13 +82,15 @@ int main(){
     uint32_t bytesRead=0;
     int numLong=0;
     int numShort=0;
-    fp = fopen(LOG_NAME,"r");
+    fp = fopen(LOG_NAME,"rb");
     if(fp == NULL){
         printf("Could not open log file.:%s\n",LOG_NAME);
+		return -1;
     }
-    fp_out = fopen(OUTPUT_NAME,"w");
+    fp_out = fopen(OUTPUT_NAME,"wb");
     if(fp_out == NULL){
         printf("Could not open log file:%s.\n",OUTPUT_NAME);
+		return -1;
     }
 
 
@@ -220,7 +222,7 @@ int main(){
 
      }
 
-        char str[50];
+        char str[100];
         if(m.header & PRES_TYPE){
             sprintf(str,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",time_abs,a.x,a.y,a.z,g.x,g.y,g.z,p.pres,t.temp);
         }
