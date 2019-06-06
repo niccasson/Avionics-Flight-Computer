@@ -122,8 +122,9 @@ void loggingTask(void * params){
 
 				uint32_t header  = (ACC_TYPE | GYRO_TYPE) + (delta_t & 0x0FFF);// Make sure time doesn't overwrite type and event bits.
 
-				measurement.data[0] = header& 0x00FF;
-				measurement.data[1] = header>>8;
+				measurement.data[0] = (header >> 16) & 0xFF;
+				measurement.data[1] = (header >> 8) & 0xFF;
+				measurement.data[2] = (header) & 0xFF;
 
 				measurement_length = ACC_LENGTH + GYRO_LENGTH;
 
@@ -147,11 +148,12 @@ void loggingTask(void * params){
 				measurement.data[13] = ((uint16_t)imu_reading.data_gyro.z) >>8;
 				measurement.data[14] = ((uint16_t)imu_reading.data_gyro.z) & 0xFF;
 
-
+//				sprintf(buf,"%d acc.z\n",imu_reading.data_acc.z);
+//				transmit_line(huart, buf);
 			}
 
 
-			HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
+			//HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
 		}
 
 		/* BMP READING*******************************************************************************************************************************/
@@ -183,10 +185,10 @@ void loggingTask(void * params){
 				measurement.data[20]= (uint32_t)bmp_reading.data.temperature & 0xFF; //XLSB
 
 		    	altitude = altitude_approx((float)bmp_reading.data.pressure, (float)bmp_reading.data.temperature,configParams);
-		    	measurement.data[21] = altitude.byte_val & 0xFF000000;
-		    	measurement.data[22] = altitude.byte_val & 0x00FF0000;
-		    	measurement.data[23] = altitude.byte_val & 0x0000FF00;
-		    	measurement.data[24] = altitude.byte_val & 0x000000FF;
+		    	measurement.data[21] = (altitude.byte_val>>24) & 0xFF;
+		    	measurement.data[22] = (altitude.byte_val>>16) & 0xFF;
+		    	measurement.data[23] = (altitude.byte_val>>8) & 0xFF;
+		    	measurement.data[24] = (altitude.byte_val) & 0xFF;
 		    	int16_t alt_int = altitude.float_val;
 		    	int16_t alt_dec = (altitude.float_val*100)-(alt_int*100);
 
@@ -199,6 +201,10 @@ void loggingTask(void * params){
 		}
 
 
+		if(imu_reading.data_acc.z>5461){
+			buzz(550);
+			//HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+		}
 
 		/* Fill Buffer and/or write to flash*********************************************************************************************************/
 		is_there_data = isMeasurementEmpty(&measurement);
@@ -239,10 +245,10 @@ void loggingTask(void * params){
 				while(1);
 			}
 
-			if((bytesLeft+bytesInPrevBuffer)!=20 && ((bytesLeft+bytesInPrevBuffer)!=14)){
-
-				while(1){}
-			}
+//			if((bytesLeft+bytesInPrevBuffer)!=20 && ((bytesLeft+bytesInPrevBuffer)!=14)){
+//
+//				while(1){}
+//			}
 
 			//Put as much data as will fit into the almost full buffer.
 			if(buffer_selection == BUFFER_A){

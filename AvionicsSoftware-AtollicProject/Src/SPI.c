@@ -323,7 +323,9 @@ void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer
 	//Read in the specified number of bytes.
 	if(rx_buffer_size>0){
 		stat = HAL_SPI_Receive(&hspi,rx_buffer,rx_buffer_size,timeout);
-		while(stat != HAL_OK){}
+		while(stat != HAL_OK){
+			stat = HAL_SPI_GetState(&hspi);
+		}
 	}
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 

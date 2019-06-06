@@ -24,6 +24,7 @@
 #include "pressure_sensor_bmp3.h"	//For bmp reading struct
 #include "sensorAG.h"				//For imu_reading struct
 #include "altimeter.h"
+#include "buzzer.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS

@@ -195,7 +195,7 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
 
 	if(!IS_IN_FLIGHT(configParams->values.flags)){
 		get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
-
+		configParams->values.ref_pres = dataStruct.data.pressure/100;
 	}
     while(1){
 

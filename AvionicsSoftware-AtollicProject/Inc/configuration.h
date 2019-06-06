@@ -102,8 +102,8 @@ typedef struct {
 	uint8_t 	 pres_os;
 	uint8_t  	 iir_coef;
 
-	float	 ref_alt;
-	float 	 ref_pres;
+	float	 	 ref_alt;
+	float 	 	 ref_pres;
 
 
 	FlashStruct_t * flash;
