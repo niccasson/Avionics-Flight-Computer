@@ -233,12 +233,12 @@ void spi_transmit(SPI_HandleTypeDef hspi, uint8_t *reg_addr, uint8_t *tx_buffer,
 
 	/* Select the slave register (**1 byte address**) first via a transmit */
 	stat = HAL_SPI_Transmit(&hspi,reg_addr,1,timeout);
-    while(stat != HAL_OK){}
+    while(stat != HAL_OK){stat = HAL_SPI_GetState(&hspi);}
     /* Send the tx_buffer to slave */
 
     if(size>1){
 		stat = HAL_SPI_Transmit(&hspi,tx_buffer,size,timeout);
-		while(stat != HAL_OK){}
+		while(stat != HAL_OK){stat = HAL_SPI_GetState(&hspi);}
     }
 
 	//Write the CS hi (release)
@@ -276,7 +276,9 @@ void spi_read(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t *rx_buffer,uin
 
 	//Read in the specified number of bytes.
 	stat = HAL_SPI_Receive(&hspi,rx_buffer,total_size-1,timeout);
-	while(stat != HAL_OK){}
+	while(stat != HAL_OK){
+		stat = HAL_SPI_GetState(&hspi);
+	}
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);
 
 }
@@ -318,7 +320,8 @@ void spi_receive(SPI_HandleTypeDef hspi,uint8_t *addr_buffer,uint8_t addr_buffer
 	//Send the address to read from.
 	if(addr_buffer_size>0){
 		stat = HAL_SPI_Transmit(&hspi,addr_buffer,addr_buffer_size,timeout);
-		while(stat != HAL_OK){}
+		while(stat != HAL_OK){
+			stat = HAL_SPI_GetState(&hspi);}
 	}
 	//Read in the specified number of bytes.
 	if(rx_buffer_size>0){
@@ -364,12 +367,16 @@ void spi_send(SPI_HandleTypeDef hspi, uint8_t *reg_addr,uint8_t reg_addr_size, u
 	/* Select the slave register (**1 byte address**) first via a transmit */
 	if(reg_addr_size>0){
 		stat = HAL_SPI_Transmit(&hspi,reg_addr,reg_addr_size,timeout);
-		while(stat != HAL_OK){}
+		while(stat != HAL_OK){
+			stat = HAL_SPI_GetState(&hspi);
+		}
 	}
     /* Send the tx_buffer to slave */
 	if(tx_buffer_size>0){
 		stat = HAL_SPI_Transmit(&hspi,tx_buffer,tx_buffer_size,timeout);
-		while(stat != HAL_OK){}
+		while(stat != HAL_OK){
+			stat = HAL_SPI_GetState(&hspi);
+		}
     }
 	//Write the CS hi (release)
 	HAL_GPIO_WritePin(port,pin,GPIO_PIN_SET);

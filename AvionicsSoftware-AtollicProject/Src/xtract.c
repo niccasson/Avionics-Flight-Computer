@@ -134,6 +134,7 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	else if((strcmp(command, "start") == 0 && *state == MAIN_MENU )){
 
 		vTaskResume(startupTaskHandle);
+		config->values.state = STATE_LAUNCHPAD_ARMED;
 		vTaskSuspend(NULL);
 
 	}
@@ -249,8 +250,69 @@ void memory_menu(char* command, xtractParams * params){
 		}
 	else if (command[0] == 'b'){
 
+
+		uint32_t end_Address = scan_flash(flash);
+		sprintf(output,"end address :%ld \n",end_Address);
+		transmit_line(uart,output);
+
 		}
 	else if (command[0] == 'c'){
+
+			uint8_t dataRX[FLASH_PAGE_SIZE];
+
+			sprintf(output,"Erasing data section ...");
+			transmit_line(uart,output);
+
+			  uint32_t address = FLASH_START_ADDRESS;
+			  FlashStatus_t stat;
+			  while(address <= FLASH_END_ADDRESS){
+
+				  if(address>FLASH_PARAM_END_ADDRESS){
+				  stat = erase_sector(flash,address);
+				  address += FLASH_SECTOR_SIZE;
+				  }
+				  else{
+					  stat = erase_param_sector(flash,address);
+					  address += FLASH_PARAM_SECTOR_SIZE;
+				  }
+				  //Wait for erase to finish
+				  while(IS_DEVICE_BUSY(stat)){
+
+					  stat = get_status_reg(flash);
+
+					  vTaskDelay(pdMS_TO_TICKS(1));
+				  }
+
+				  HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
+					sprintf(output,"Erasing sector %ld ...",address);
+					transmit_line(uart,output);
+			  }
+
+			  read_page(flash,FLASH_START_ADDRESS,dataRX,256);
+			  uint16_t empty = 0xFFFF;
+			  	  int i;
+			  for(i=0;i<256;i++){
+
+				  if(dataRX[i] != 0xFF){
+					 empty --;
+				  }
+			  }
+
+			  if(empty == 0xFFFF){
+
+				  transmit_line(uart,"Flash Erased Success!");
+			  }
+
+			if(stat == FLASH_OK){
+				sprintf(output,"Success:");
+			}
+			else{
+				sprintf(output,"Failed:");
+
+			}
+			transmit_line(uart,output);
+
+
 
 		}
 	else if (command[0] == 'd'){
@@ -448,7 +510,7 @@ void configure(char* command,xtractParams * params){
 						"\t[i] - set BMP388 odr (1,12,25,50,100,200) \r\n"
 						"\t[j] - set pressure oversampling (0,2,4,8,16,32) \r\n"
 						"\t[k] - set temperature oversampling (0,2,4,8,16,32) \r\n"
-						"\t[l] - set BMP388 IIR filter coefficient (1,3,7,15,31,63,127) \r\n"
+						"\t[l] - set BMP388 IIR filter coefficient (0,1,3,7,15,31,63,127) \r\n"
 						"\t[m] - Read the current settings\r\n"
 						"\t[n] - Calibrate altitude\r\n"
 						);
@@ -910,6 +972,12 @@ void configure(char* command,xtractParams * params){
 		int value = atoi(val_str);
 
 		switch(value){
+
+				case 0:
+					sprintf(output,"Setting bmp IIR filter coefficient to off .\n" );
+					transmit_line(uart,output);
+					config->values.temp_os =  BMP3_IIR_FILTER_DISABLE;
+					break;
 
 				case 1:
 					sprintf(output,"Setting bmp IIR filter coefficient to %d .\n",value );

@@ -153,7 +153,7 @@ int main(void)
 	tasks.huart_ptr = &huart6_ptr;
 	tasks.flightCompConfig = &flightCompConfig;
 
-
+	flightCompConfig.values.state = STATE_LAUNCHPAD_ARMED; // CHANGE TO STATE_LAUNCHPAD !!!!!
 	//init_bmp(&flightCompConfig);
 	//testIMU();
 	//testpress();

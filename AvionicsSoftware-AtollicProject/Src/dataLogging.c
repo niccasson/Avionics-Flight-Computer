@@ -153,7 +153,7 @@ void loggingTask(void * params){
 			}
 
 
-			//HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
+			HAL_GPIO_TogglePin(USR_LED_PORT,USR_LED_PIN);
 		}
 
 		/* BMP READING*******************************************************************************************************************************/
@@ -167,14 +167,15 @@ void loggingTask(void * params){
 			if(is_there_data){
 				//We already have a imu reading.
 
-				measurement_length += (PRES_LENGTH + TEMP_LENGTH);
+				measurement_length += (PRES_LENGTH + TEMP_LENGTH + ALT_LENGTH);
 
 				//Update the header bytes.
-				uint16_t header = (measurement.data[1]<<8) + measurement.data[0];
+				uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 				header |= PRES_TYPE | TEMP_TYPE;
-				measurement.data[0] =header&0xFF;
-				measurement.data[1] =(header)>>8;
 
+				measurement.data[0] = (header >> 16) & 0xFF;
+				measurement.data[1] = (header >> 8) & 0xFF;
+				measurement.data[2] = (header) & 0xFF;
 
 				measurement.data[15]= (((uint32_t)bmp_reading.data.pressure) >>16) &0xFF ;	//MSB
 				measurement.data[16]= (((uint32_t)bmp_reading.data.pressure) >> 8) & 0xFF;	//LSB
@@ -189,11 +190,20 @@ void loggingTask(void * params){
 		    	measurement.data[22] = (altitude.byte_val>>16) & 0xFF;
 		    	measurement.data[23] = (altitude.byte_val>>8) & 0xFF;
 		    	measurement.data[24] = (altitude.byte_val) & 0xFF;
-		    	int16_t alt_int = altitude.float_val;
-		    	int16_t alt_dec = (altitude.float_val*100)-(alt_int*100);
-
-		    	sprintf(buf, "Pressure: %ld [Pa]\tTemperature: %ld [0.01 C]\tAltitude: %d.%d [m]", (uint32_t)bmp_reading.data.pressure,(uint32_t) bmp_reading.data.temperature, alt_int,alt_dec);
-		    	transmit_line(huart, buf);
+//		    	int16_t alt_int = altitude.float_val;
+//		    	int16_t alt_dec = (altitude.float_val*100)-(alt_int*100);
+//		    	char c = ' ';
+//		    	if(alt_int < 0 ){
+//		    		alt_int = -alt_int;
+//		    		c = '-';
+//		    	}
+//		    	if(alt_dec < 0 ){
+//		    		alt_dec = -alt_dec;
+//		    		c = '-';
+//		    	}
+//
+//		    	sprintf(buf, "Pressure: %ld [Pa]\tTemperature: %ld [0.01 C]\tAltitude: %c%d.%02d [m]", (uint32_t)bmp_reading.data.pressure,(uint32_t) bmp_reading.data.temperature, c,alt_int,alt_dec);
+//		    	transmit_line(huart, buf);
 
 			}
 
@@ -201,30 +211,37 @@ void loggingTask(void * params){
 		}
 
 
-		if(imu_reading.data_acc.z>5461){
+		if(imu_reading.data_acc.z>5461 && configParams->values.state == STATE_LAUNCHPAD_ARMED){
 			buzz(550);
+			configParams->values.state = STATE_IN_FLIGHT_PRE_APOGEE;
+			uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
+			header |= LAUNCH_DETECT;
+
+			measurement.data[0] = (header >> 16) & 0xFF;
+			measurement.data[1] = (header >> 8) & 0xFF;
+			measurement.data[2] = (header) & 0xFF;
 			//HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 		}
 
 		/* Fill Buffer and/or write to flash*********************************************************************************************************/
 		is_there_data = isMeasurementEmpty(&measurement);
 
-		if(((buffer_index_curr+measurement_length +2) < DATA_BUFFER_SIZE) && (is_there_data)){
+		if(((buffer_index_curr+measurement_length +HEADER_SIZE) < DATA_BUFFER_SIZE) && (is_there_data)){
 
 			//There is room in the current buffer for the full measurement.
 
 			if(buffer_selection == BUFFER_A){
 
-				memcpy(&data_bufferA[buffer_index_curr],&(measurement.data),measurement_length+2);
+				memcpy(&data_bufferA[buffer_index_curr],&(measurement.data),measurement_length+HEADER_SIZE);
 				//transmit_bytes(huart,&data_bufferA[buffer_index_curr],measurement_length+2);
 			}
 			else if(buffer_selection == BUFFER_B){
 
-				memcpy(&data_bufferB[buffer_index_curr],&(measurement.data),measurement_length+2);
+				memcpy(&data_bufferB[buffer_index_curr],&(measurement.data),measurement_length+HEADER_SIZE);
 				//transmit_bytes(huart,&data_bufferB[buffer_index_curr],measurement_length+2);
 			}
 
-			buffer_index_curr += (measurement_length+2);
+			buffer_index_curr += (measurement_length+HEADER_SIZE);
 
 			//Reset the measurement.
 			for(i=0;i<sizeof(Measurement_t);i++){
@@ -238,12 +255,12 @@ void loggingTask(void * params){
 
 			//Split measurement across the buffers, and write to flash.
 			uint8_t bytesInPrevBuffer = DATA_BUFFER_SIZE- buffer_index_curr;
-			uint8_t bytesLeft = (measurement_length+2)-bytesInPrevBuffer;
+			uint8_t bytesLeft = (measurement_length+HEADER_SIZE)-bytesInPrevBuffer;
 
-			if((((measurement.data[1]<<8)+measurement.data[0])&0x0FFF)>300){
-
-				while(1);
-			}
+//			if((((measurement.data[1]<<8)+measurement.data[0])&0x0FFF)>300){
+//
+//				while(1);
+//			}
 
 //			if((bytesLeft+bytesInPrevBuffer)!=20 && ((bytesLeft+bytesInPrevBuffer)!=14)){
 //

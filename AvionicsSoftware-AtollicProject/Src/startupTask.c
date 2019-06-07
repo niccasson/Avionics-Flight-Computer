@@ -92,9 +92,11 @@ static void eraseFlash(startParams * params){
 
 			  if(address>FLASH_PARAM_END_ADDRESS){
 			  stat = erase_sector(flash,address);
+			  address += FLASH_SECTOR_SIZE;
 			  }
 			  else{
 				  stat = erase_param_sector(flash,address);
+				  address += FLASH_PARAM_SECTOR_SIZE;
 			  }
 			  //Wait for erase to finish
 			  while(IS_DEVICE_BUSY(stat)){
@@ -104,8 +106,9 @@ static void eraseFlash(startParams * params){
 				  vTaskDelay(pdMS_TO_TICKS(1));
 			  }
 
-			  address += FLASH_SECTOR_SIZE;
+
 		  }
+
 		  read_page(flash,FLASH_START_ADDRESS,dataRX,256);
 		  uint16_t empty = 0xFFFF;
 
@@ -150,6 +153,7 @@ void vTask_starter(void * pvParams){
 		  if(!HAL_GPIO_ReadPin(USR_PB_PORT,USR_PB_PIN)){
 
 			  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+			  config->values.state = STATE_XTRACT;
 			  vTaskResume(xtractTask_h);
 			  vTaskSuspend(NULL);
 
