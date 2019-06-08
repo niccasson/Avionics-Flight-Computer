@@ -69,7 +69,8 @@ void loggingTask(void * params){
 		flash_address = configParams->values.end_data_address;
 	}
 
-
+	int32_t velocity_a = 0;
+	int32_t velocity_p = 0;
 
 	uint8_t data_bufferA[DATA_BUFFER_SIZE];			//This stores the data until we have enough to write to flash.
 	uint8_t	data_bufferB[DATA_BUFFER_SIZE]; 		//This stores the data until we have enough to write to flash.
@@ -222,6 +223,8 @@ void loggingTask(void * params){
 			measurement.data[2] = (header) & 0xFF;
 			//HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 		}
+
+
 
 		/* Fill Buffer and/or write to flash*********************************************************************************************************/
 		is_there_data = isMeasurementEmpty(&measurement);

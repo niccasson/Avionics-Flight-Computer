@@ -150,7 +150,7 @@ void vTask_starter(void * pvParams){
 
 	  while(1){
 
-		  if(!HAL_GPIO_ReadPin(USR_PB_PORT,USR_PB_PIN)){
+		  if((!HAL_GPIO_ReadPin(USR_PB_PORT,USR_PB_PIN))||(config->values.state==STATE_XTRACT)){
 
 			  HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
 			  config->values.state = STATE_XTRACT;

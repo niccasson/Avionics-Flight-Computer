@@ -44,8 +44,8 @@ startParams tasks;
 void SystemClock_Config(void);
 void StartDefaultTask(void const * argument);
 void testFlash(FlashStruct_t * flash);
-void testpress();
-void testIMU();
+char testpress();
+char testIMU();
 void MX_GPIO_Init();
 void vTask_starter(void * pvParams);
 
@@ -119,9 +119,7 @@ int main(void)
 	recovery_init();
 	transmit_line(&huart6_ptr,"Recovery GPIO pins setup.");
 
-	HAL_Delay(1000);
-	buzzerInit();
-	buzz(500);
+
 
 
 	logParams.flash_ptr = &flash;
@@ -155,8 +153,23 @@ int main(void)
 
 	flightCompConfig.values.state = STATE_LAUNCHPAD_ARMED; // CHANGE TO STATE_LAUNCHPAD !!!!!
 	//init_bmp(&flightCompConfig);
-	//testIMU();
-	//testpress();
+	char imu_good = testIMU();
+	char bmp_good = testpress();
+
+	if(imu_good == 1 && bmp_good==1){
+		HAL_Delay(1000);
+
+		buzz(2000);
+	}
+	else{
+
+		int i;
+		for(i=0;i<20;i++){
+			buzz(500);
+			HAL_Delay(500);
+			flightCompConfig.values.state = STATE_XTRACT;
+		}
+	}
 	// testFlash(&flash);
 
 	//Timer_GPIO_Init(); //GPIO MUST be firstly initialized
@@ -308,9 +321,9 @@ void SystemClock_Config(void)
 
 
 
-void testpress(){
+char testpress(){
 SPI_HandleTypeDef spi2;
-
+char result = 0;
 spi2_init(&spi2);
 HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_RESET);
 uint8_t id= 0x50;
@@ -323,11 +336,12 @@ spi_receive(spi2,command,1,id_read,2,10);
 if(id_read[1] == id){
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+	result = 1;
+}
+return result;
 }
 
-}
-
-void testIMU(){
+char testIMU(){
 
 //    GPIO_InitTypeDef GPIO_InitStruct3 = {0};
 //    GPIO_InitStruct3.Pin = SPI3_CS2_PIN;
@@ -338,6 +352,8 @@ void testIMU(){
 //
 //    HAL_GPIO_Init(SPI3_CS2_PORT,&GPIO_InitStruct3);
 
+	char result = 0;
+	char res = 0;
 	SPI_HandleTypeDef spi3;
 
 	spi3_init(&spi3);
@@ -353,6 +369,7 @@ void testIMU(){
 	if(id_read[1] == id){
 
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+		res += 1;
 	}
 
 	spi_receive(spi3,command,1,id_read,2,11);
@@ -360,8 +377,13 @@ void testIMU(){
 	if(id_read[0] == 0x0F){
 
 		HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
+		res += 1;
 	}
 
+	if(res == 2){
+		result = 1;
+	}
+	return result;
 }
 
 
