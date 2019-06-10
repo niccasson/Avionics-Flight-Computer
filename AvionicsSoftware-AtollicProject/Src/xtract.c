@@ -133,8 +133,9 @@ void handle_command(char* command,xtractParams * params,menuState_t * state){
 	}
 	else if((strcmp(command, "start") == 0 && *state == MAIN_MENU )){
 
-		vTaskResume(startupTaskHandle);
 		config->values.state = STATE_LAUNCHPAD_ARMED;
+		vTaskResume(startupTaskHandle);
+
 		vTaskSuspend(NULL);
 
 	}

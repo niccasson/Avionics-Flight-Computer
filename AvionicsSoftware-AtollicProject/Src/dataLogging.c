@@ -59,18 +59,23 @@ void loggingTask(void * params){
 	UART_HandleTypeDef * huart = logStruct->uart;
 	configData_t * configParams = logStruct->flightCompConfig;
 
-	uint32_t flash_address;
+	uint32_t flash_address = FLASH_START_ADDRESS;
 
 	//If start and end are equal there is no other flight data, otherwise start recording after already saved data.
-	if(configParams->values.start_data_address == configParams->values.end_data_address){
+//	if(configParams->values.start_data_address == configParams->values.end_data_address){
+//
+//		flash_address = configParams->values.start_data_address;
+//	}else{
+//		flash_address = configParams->values.end_data_address;
+//	}
 
-		flash_address = configParams->values.start_data_address;
-	}else{
-		flash_address = configParams->values.end_data_address;
-	}
+//	int32_t velocity_a = 0;
+//	int32_t velocity_p = 0;
+//	int32_t acc_x_filtered;
+//	int32_t acc_y_filtered;
+	int32_t acc_z_filtered;
+	uint8_t acc_z_filter_index=0;
 
-	int32_t velocity_a = 0;
-	int32_t velocity_p = 0;
 
 	uint8_t data_bufferA[DATA_BUFFER_SIZE];			//This stores the data until we have enough to write to flash.
 	uint8_t	data_bufferB[DATA_BUFFER_SIZE]; 		//This stores the data until we have enough to write to flash.
@@ -101,7 +106,7 @@ void loggingTask(void * params){
 
 	prev_time_ticks = xTaskGetTickCount();
 	alt_value altitude;
-
+	buzz(250);
 	while(1){
 
 		measurement_length=0;
@@ -149,7 +154,19 @@ void loggingTask(void * params){
 				measurement.data[13] = ((uint16_t)imu_reading.data_gyro.z) >>8;
 				measurement.data[14] = ((uint16_t)imu_reading.data_gyro.z) & 0xFF;
 
-//				sprintf(buf,"%d acc.z\n",imu_reading.data_acc.z);
+//				int32_t acc_z_temp = imu_reading.data_acc.z - 2732;
+//				acc_z_filtered += acc_z_temp;
+//				acc_z_filter_index ++;
+//				if(acc_z_filter_index == 8){
+//
+//					acc_z_filtered = acc_z_filtered >>3;
+//					acc_z_filter_index = 0;
+//
+//				}
+
+
+
+//				sprintf(buf,"%d acc.z %ld acc.z filtered\n",imu_reading.data_acc.z,acc_z_filtered);
 //				transmit_line(huart, buf);
 			}
 
