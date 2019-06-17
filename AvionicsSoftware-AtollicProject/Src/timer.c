@@ -15,12 +15,11 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 
 #include "timer.h"
 #include "cmsis_os.h"
+#include "buzzer.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -82,30 +81,46 @@ void Timer_GPIO_Init(void){
 }
 
 void vTask_timer(void *param){
-	uart = (UART_HandleTypeDef*) param;
-	taskENABLE_INTERRUPTS();
+
+	//taskENABLE_INTERRUPTS();
 
 	//Set both of the outputs to 0 for setup
 	HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
 	HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
-
+	TickType_t prevTime;
+	prevTime = xTaskGetTickCount();
 	/* As per most FreeRTOS tasks, this task is implemented in an infinite loop. */
-	while(1){
-		if(!HAL_GPIO_ReadPin(INPUT_PORT, INPUT_PIN)){
+
+
 				//TODO check how long outputs should be on for
 				//TODO check in init that outputs are off before connecting to e-matches
-				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
-				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_SET); //turn Output 1 on
-				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //keep Output on for the designated time
-				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
+
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
+				int i;
+				for(i=0;i<2;i++){
+					//buzz(250);
+					vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(200));
+				}
 
 
-				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL3)); //wait for the second time interval
-				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_SET); //turn Output 2 on
-				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL4)); //keep Output 2 on for the desired time
-				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
-		}
-	}
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(TIME_INTERVAL2)); //wait for the first time interval
+
+				for(i=0;i<4;i++){
+					//buzz(250);
+					vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(200));
+				}
+				vTaskDelete(NULL);
+
+//				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //keep Output on for the designated time
+//				HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
+//
+//
+//				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL3)); //wait for the second time interval
+//				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_SET); //turn Output 2 on
+//				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL4)); //keep Output 2 on for the desired time
+//				HAL_GPIO_WritePin(OUTPUT2_PORT,OUTPUT2_PIN, GPIO_PIN_RESET); //turn Output 2 off
+
+
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------

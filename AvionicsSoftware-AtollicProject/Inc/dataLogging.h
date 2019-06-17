@@ -25,6 +25,8 @@
 #include "sensorAG.h"				//For imu_reading struct
 #include "altimeter.h"
 #include "buzzer.h"
+#include "recovery.h"
+#include <math.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -79,6 +81,8 @@ typedef struct{
 	//Queues
 	QueueHandle_t IMU_data_queue;	//For holding accelerometer and gyroscope readings.
 	QueueHandle_t PRES_data_queue;	//For holding pressure and temp. readings.
+
+	TaskHandle_t *timerTask_h;
 
 }LoggingStruct_t;
 

@@ -26,6 +26,7 @@
 #include "startupTask.h"
 #include "main.h"
 #include "buzzer.h"
+#include "timer.h"
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
@@ -121,7 +122,6 @@ int main(void)
 
 
 
-
 	logParams.flash_ptr = &flash;
 	logParams.IMU_data_queue = imuQueue_h;
 	logParams.PRES_data_queue= bmpQueue_h;
@@ -145,8 +145,10 @@ int main(void)
 	tasks.bmpTask_h = NULL;
 	tasks.imuTask_h = NULL;
 	tasks.xtractTask_h = NULL;
+	tasks.timerTask_h = NULL;
 	xtractParameters.startupTaskHandle = NULL;
 
+	logParams.timerTask_h = &tasks.timerTask_h;
 	tasks.flash_ptr = &flash;
 	tasks.huart_ptr = &huart6_ptr;
 	tasks.flightCompConfig = &flightCompConfig;
@@ -159,7 +161,7 @@ int main(void)
 	if(imu_good == 1 && bmp_good==1){
 		HAL_Delay(1000);
 
-		buzz(2000);
+		buzz(500);
 	}
 	else{
 
@@ -182,16 +184,16 @@ int main(void)
 	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
 
-	//if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
-	//      		  	"timer", /* Text name for the task. This is only to facilitate debugging */
-	//      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-	//  				 (void*) &huart2_ptr,	/* pointer to the huart object */
-	//  				 2,			 /* This task will run at priorirt 2. */
-	//  				 NULL		 /* This example does not use the task handle. */
-	//        	  	  ) == -1){
-	//  	  Error_Handler();
-	//    }
-	//
+	if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
+	      		  	"timer", /* Text name for the task. This is only to facilitate debugging */
+	      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+	  				 NULL,	/* pointer to the huart object */
+	  				 1,			 /* This task will run at priorirt 2. */
+	  				 &tasks.timerTask_h		 /* This example does not use the task handle. */
+	        	  	  ) == -1){
+	  	  Error_Handler();
+	    }
+
 	if( xTaskCreate(	vTask_sensorAG, 	 /* Pointer to the function that implements the task */
 			"acc and gyro sensor", /* Text name for the task. This is only to facilitate debugging */
 			 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
@@ -206,7 +208,7 @@ int main(void)
 
 	if(xTaskCreate(	loggingTask, 	 /* Pointer to the function that implements the task */
 			"Logging task", /* Text name for the task. This is only to facilitate debugging */
-			 2000,		 /* Stack depth - small microcontrollers will use much less stack than this */
+			 10000,		 /* Stack depth - small microcontrollers will use much less stack than this */
 			 (void*) &logParams,	/* pointer to the huart object */
 			 2,			 /* This task will run at priorirt 2. */
 			 &tasks.loggingTask_h	 /* This example does not use the task handle. */
@@ -250,7 +252,7 @@ int main(void)
 	vTaskSuspend(tasks.imuTask_h);
 	vTaskSuspend(tasks.bmpTask_h);
 	vTaskSuspend(tasks.loggingTask_h);
-
+	vTaskSuspend(tasks.timerTask_h);
 	/* Start scheduler -- comment to not use FreeRTOS */
 	osKernelStart();
 
@@ -449,7 +451,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* User can add his own implementation to report the HAL error return state */
-//while(1);
+while(1);
 }
 
 #ifdef  USE_FULL_ASSERT

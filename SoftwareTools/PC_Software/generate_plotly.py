@@ -22,7 +22,7 @@ from urllib3.packages.rfc3986.parseresult import authority_from
 def plot_data():
     DATA_FILE_PATH = 'flightComputer.csv'
 
-    DATA_LABELS = {'time':0,'acceleration_x':1,'acceleration_y':2,'acceleration_z':3,'rotation_x':4,'rotation_y':5,'rotation_z':6,'pressure':7,'temperature':8}
+    DATA_LABELS = {'time':0,'acceleration_x':1,'acceleration_y':2,'acceleration_z':3,'rotation_x':4,'rotation_y':5,'rotation_z':6,'pressure':7,'temperature':8,'altitude':9,'events':10}
 
     ###LIST FOR TRACES
     ##NOTE: CHANGE THE COLUMNS ACCORDING TO THE XLS DATA FROM FLIGHT COMP
@@ -45,7 +45,7 @@ def plot_data():
     thrust = []             #col 29 in xls, 28 in py
 
     data = []
-
+    stop_time = 0;
     with open(DATA_FILE_PATH, newline='') as csvfile:
         data_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
 
@@ -59,8 +59,12 @@ def plot_data():
 
             for i in range(len(row)):
 
-                data[i].append(int(row[i]))
+                try:
+                    data[i].append(int(row[i]))
 
+
+                except:
+                    data[i].append(float(row[i]))
     data = np.array(data)
     data = data.astype('float64')
     print(data[DATA_LABELS['pressure']])
@@ -88,6 +92,9 @@ def plot_data():
             data[DATA_LABELS[key]] = data[DATA_LABELS[key]]/1000
             print(data[DATA_LABELS[key]][1])
 
+
+        diffs = np.diff(data[DATA_LABELS['time']])
+        np.argwhere(x > 0.01)
 
     ##Accleration trace
     trace1 = {
@@ -124,9 +131,9 @@ def plot_data():
 
     trace4 = {
             'x':data[DATA_LABELS['time']],
-            'y':inertia,
+            'y':data[DATA_LABELS['altitude']],
             'mode':'lines',
-            'name':'VELOCITY',
+            'name':'Altitude (m)',
             'type': 'scatter',
             'xaxis':'x',
             'yaxis':'y'
@@ -134,9 +141,9 @@ def plot_data():
 
     trace5 = {
             'x':data[DATA_LABELS['time']],
-            'y':thrust,
+            'y':data[DATA_LABELS['events']],
             'mode':'lines',
-            'name':'THRUST (N)',
+            'name':'Events',
             'type': 'scatter',
             'xaxis':'x',
             'yaxis':'y'

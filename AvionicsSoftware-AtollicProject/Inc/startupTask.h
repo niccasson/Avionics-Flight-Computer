@@ -42,6 +42,7 @@ typedef struct{
 	  TaskHandle_t bmpTask_h ;
 	  TaskHandle_t imuTask_h ;
 	  TaskHandle_t xtractTask_h;
+	  TaskHandle_t timerTask_h;
 
 	  FlashStruct_t * flash_ptr;
 	  UART_HandleTypeDef * huart_ptr;
