@@ -68,6 +68,18 @@ def plot_data():
     data = np.array(data)
     data = data.astype('float64')
     print(data[DATA_LABELS['pressure']])
+
+    endIndex = 0
+    diffs = np.diff(data[DATA_LABELS['time']])
+    print(diffs)
+    for p, val in enumerate(diffs):
+        print(val)
+        if val > 50.0:
+            endIndex = p - 1
+            print("endIndex: {}".format(endIndex))
+            break
+
+
     #Data conditioning
     for key in DATA_LABELS.keys():
         print(key)
@@ -93,13 +105,12 @@ def plot_data():
             print(data[DATA_LABELS[key]][1])
 
 
-        diffs = np.diff(data[DATA_LABELS['time']])
-        np.argwhere(x > 0.01)
+        # data[DATA_LABELS[key]] = data[DATA_LABELS[key]][:endIndex]
 
     ##Accleration trace
     trace1 = {
-            'x':data[DATA_LABELS['time']], #put the x values here, they are same for all i.e time
-            'y':data[DATA_LABELS['acceleration_x']], #put the y values i want, i.e this is acceleration column
+            'x':data[DATA_LABELS['time']][:endIndex], #put the x values here, they are same for all i.e time
+            'y':data[DATA_LABELS['acceleration_x']][:endIndex], #put the y values i want, i.e this is acceleration column
             'mode':'lines', #want a line curve
             'name':'ACCELERATION X (m/s^2)', #name of the trace i want i.e name of y
             'type': 'scatter',#want to create scatter plots of these values
@@ -109,8 +120,8 @@ def plot_data():
 
 
     trace2 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['acceleration_y']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['acceleration_y']][:endIndex],
             'mode':'lines',
             'name':'ACCELERATION Y (m/s)',
             'type': 'scatter',
@@ -120,8 +131,8 @@ def plot_data():
 
 
     trace3 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['acceleration_z']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['acceleration_z']][:endIndex],
             'mode':'lines',
             'name':'ACCELERATION Z',
             'type': 'scatter',
@@ -130,8 +141,8 @@ def plot_data():
             }
 
     trace4 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['altitude']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['altitude']][:endIndex],
             'mode':'lines',
             'name':'Altitude (m)',
             'type': 'scatter',
@@ -140,8 +151,8 @@ def plot_data():
             }
 
     trace5 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['events']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['events']][:endIndex],
             'mode':'lines',
             'name':'Events',
             'type': 'scatter',
@@ -150,8 +161,8 @@ def plot_data():
             }
 
     trace6 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['pressure']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['pressure']][:endIndex],
             'mode':'lines',
             'name':'AIR PRESSURE (kPa)',
             'type': 'scatter',
@@ -160,8 +171,8 @@ def plot_data():
             }
 
     trace7 = {
-            'x':data[DATA_LABELS['time']],
-            'y':data[DATA_LABELS['temperature']],
+            'x':data[DATA_LABELS['time']][:endIndex],
+            'y':data[DATA_LABELS['temperature']][:endIndex],
             'mode':'lines',
             'name':'TEMPERATURE (C)',
             'type': 'scatter',
