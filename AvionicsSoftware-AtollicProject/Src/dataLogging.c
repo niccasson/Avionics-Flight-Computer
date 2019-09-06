@@ -61,6 +61,11 @@ void loggingTask(void * params){
 	TaskHandle_t *timerTask_h = logStruct->timerTask_h;
 	uint32_t flash_address = FLASH_START_ADDRESS;
 
+	if(IS_IN_FLIGHT(configParams->values.flags)){
+
+		flash_address = configParams->values.end_data_address;
+	}
+
 	//If start and end are equal there is no other flight data, otherwise start recording after already saved data.
 //	if(configParams->values.start_data_address == configParams->values.end_data_address){
 //
@@ -121,6 +126,22 @@ void loggingTask(void * params){
 	uint8_t landed_counter = 0;
 
 	//buzz(250);
+	if(!IS_IN_FLIGHT(configParams->values.flags)){
+	recoverySelect_t event_d = DROGUE;
+	continuityStatus_t cont_d = check_continuity(event_d);
+
+	recoverySelect_t event_m = MAIN;
+	continuityStatus_t cont_m = check_continuity(event_m);
+
+	while(cont_m == OPEN_CIRCUIT || cont_d == OPEN_CIRCUIT){
+
+		cont_m = check_continuity(event_m);
+		cont_d = check_continuity(event_d);
+	}
+	configParams->values.state = STATE_LAUNCHPAD_ARMED;
+	write_config(configParams);}
+
+	buzz(250); // CHANGE TO 2 SECONDS!!!!!!!
 	while(1){
 
 		measurement_length=0;
@@ -264,16 +285,18 @@ void loggingTask(void * params){
 		}
 
 
-		if(configParams->values.state == STATE_LAUNCHPAD_ARMED && imu_reading.data_acc.z>5461){
+		if(configParams->values.state == STATE_LAUNCHPAD_ARMED && imu_reading.data_acc.x>10892){
 			
 			buzz(250);
 			vTaskResume(*timerTask_h); //start fixed timers.
 			configParams->values.state = STATE_IN_FLIGHT_PRE_APOGEE;
-
+			configParams->values.flags = configParams->values.flags |  0x04;
 			//configParams->values.state = STATE_IN_FLIGHT_POST_APOGEE;
 			//Record the launch event.
 			uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 			header |= LAUNCH_DETECT;
+			configParams->values.flags = configParams->values.flags | 0x01;
+			write_config(configParams);
 
 			measurement.data[0] = (header >> 16) & 0xFF;
 			measurement.data[1] = (header >> 8) & 0xFF;
@@ -286,10 +309,10 @@ void loggingTask(void * params){
 
 				if((buffer_index_curr + 256) < buff_end){
 				FlashStatus_t stat_f2 = program_page(flash_ptr,flash_address,&launchpadBuffer[buffer_index_curr],DATA_BUFFER_SIZE);
-				  while(IS_DEVICE_BUSY(stat_f2)){
+				while(IS_DEVICE_BUSY(stat_f2)){
 					  stat_f2 = get_status_reg(flash_ptr);
 					 vTaskDelay(1);
-				  }
+				 }
 				 buffer_index_curr += 256;
 				}
 				else{
@@ -319,6 +342,9 @@ void loggingTask(void * params){
 				//If altitude is within a 1m range for 20 samples
 				if(altitude.float_val>(alt_prev.float_val - 1.0) && altitude.float_val < (alt_prev.float_val+1.0)){
 					alt_count++;
+					if(alt_count >245){
+						alt_count = 201;
+					}
 				}else{
 					alt_count = 0;
 				}
@@ -328,14 +354,19 @@ void loggingTask(void * params){
 
 				alt_prev.float_val = altitude.float_val;
 				alt_count++;
+				if(alt_count >245){
+					alt_count = 201;
+				}
 			}
 
 			if((pow(imu_reading.data_gyro.x,2)+pow(imu_reading.data_gyro.y,2)+pow(imu_reading.data_gyro.z,2))<63075){
 			//If the gyro readings are all less than ~4.4 deg/sec and the altitude is not changing then the rocket has probably landed.
 
-				if(alt_count > 120){
-					configParams->values.state = STATE_LANDED;
+				if(alt_count > 200){
 
+					configParams->values.state = STATE_LANDED;
+					configParams->values.flags = configParams->values.flags & ~(0x01);
+					write_config(configParams);
 					uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 					header |= LAND_DETECT;
 
@@ -354,7 +385,8 @@ void loggingTask(void * params){
 		//Check if the altitude is below 1500ft, after the drogue has been deployed.
 		if(configParams->values.state == STATE_IN_FLIGHT_POST_APOGEE ){
 
-			if(altFiltered<-0.2){
+			if(altFiltered<375.0){
+				//375m ==  1230 ft
 				alt_main_count ++;
 			}
 			else{
@@ -369,12 +401,16 @@ void loggingTask(void * params){
 				continuityStatus_t cont = check_continuity(event);
 				uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 				header |= MAIN_DETECT;
+
 				measurement.data[0] = (header >> 16) & 0xFF;
 				measurement.data[1] = (header >> 8) & 0xFF;
 				measurement.data[2] = (header) & 0xFF;
 
 				if(cont == OPEN_CIRCUIT){
+
 					configParams->values.state =  STATE_IN_FLIGHT_POST_MAIN;
+					configParams->values.flags = configParams->values.flags |  0x10;
+					write_config(configParams);
 					uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 					header |= MAIN_DEPLOY;
 					measurement.data[0] = (header >> 16) & 0xFF;
@@ -387,11 +423,12 @@ void loggingTask(void * params){
 
 		//check if rocket has reached apogee.
 		if(configParams->values.state == STATE_IN_FLIGHT_PRE_APOGEE){
+
 			apogee_holdout_count ++;
 			if(apogee_holdout_count >(20*15)){
 
 				uint64_t acc_mag = pow(imu_reading.data_acc.x,2)+pow(imu_reading.data_acc.y,2)+pow(imu_reading.data_acc.z,2);
-				if(acc_mag < 200000 && altFiltered > 0.0){
+				if(acc_mag < 1 && altFiltered > 9000.0){
 					//5565132 = 3 * 1362^2 (aprox 0.5 g on all direction)
 					//2438m -> 8,000 ft
 
@@ -408,6 +445,9 @@ void loggingTask(void * params){
 
 					if(cont == OPEN_CIRCUIT){
 						configParams->values.state =  STATE_IN_FLIGHT_POST_APOGEE;
+						configParams->values.flags = configParams->values.flags |  0x08;
+						write_config(configParams);
+
 						uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 						header |= DROGUE_DEPLOY;
 						measurement.data[0] = (header >> 16) & 0xFF;

@@ -83,6 +83,7 @@ void Timer_GPIO_Init(void){
 void vTask_timer(void *param){
 
 	//taskENABLE_INTERRUPTS();
+	configData_t * configParams = (configData_t *)param;
 
 	//Set both of the outputs to 0 for setup
 	HAL_GPIO_WritePin(OUTPUT1_PORT,OUTPUT1_PIN, GPIO_PIN_RESET); //turn Output 1 off
@@ -96,19 +97,35 @@ void vTask_timer(void *param){
 				//TODO check in init that outputs are off before connecting to e-matches
 
 				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(TIME_INTERVAL1)); //wait for the first time interval
-				int i;
-				for(i=0;i<2;i++){
-					//buzz(250);
-					vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(200));
-				}
+				recoverySelect_t event = DROGUE;
+				enable_mosfet(event);
+				activate_mosfet(event);
 
+				configParams->values.state = STATE_IN_FLIGHT_POST_APOGEE;
+
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
 
 				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(TIME_INTERVAL2)); //wait for the first time interval
+				event = MAIN;
+				enable_mosfet(event);
+				activate_mosfet(event);
+				configParams->values.state = STATE_IN_FLIGHT_POST_MAIN;
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
+				buzz(250);
+				vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(250));
 
-				for(i=0;i<4;i++){
-					//buzz(250);
-					vTaskDelayUntil(&prevTime,pdMS_TO_TICKS(200));
-				}
 				vTaskDelete(NULL);
 
 //				vTaskDelay(pdMS_TO_TICKS(TIME_INTERVAL2)); //keep Output on for the designated time

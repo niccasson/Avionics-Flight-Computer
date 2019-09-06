@@ -297,6 +297,7 @@ uint32_t scan_flash(FlashStruct_t * flash){
 		i = i + 256;
 	}
 
+	if (result == 0) result = FLASH_SIZE_BYTES; //ADDED AFTER RECOVERY!!!!
 	return result;
 
 }

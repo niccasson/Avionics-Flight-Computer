@@ -65,7 +65,9 @@
 //Macros to get flags.
 #define IS_IN_FLIGHT(x)		((x>>0)&0x01)
 #define	IS_RECORDING(x)		((x>>1)&0x01)
-
+#define IS_PRE_DROGUE(x)	((x>>2)&0x01)
+#define IS_POST_DROGUE(x)	((x>>3)&0x01)
+#define IS_POST_MAIN(x)		((x>>4)&0x01)
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,6 +110,8 @@ typedef struct {
 
 	FlashStruct_t * flash;
 	uint8_t state;
+
+
 
 }configDataStruct_t;
 

@@ -27,6 +27,7 @@
 #include "main.h"
 #include "buzzer.h"
 #include "timer.h"
+#include "recovery.h"
 
 osThreadId defaultTaskHandle;
 UART_HandleTypeDef huart6_ptr; //global var to be passed to vTask_xtract
@@ -70,7 +71,7 @@ int main(void)
 	transmit_line(&huart6_ptr,"UMSATS ROCKETRY FLIGHT COMPUTER");
 
 	buzzerInit();
-	buzz(500);
+	//buzz(500);
 
 	QueueHandle_t imuQueue_h = xQueueCreate(10,sizeof(imu_data_struct));
 	if(imuQueue_h == NULL){
@@ -111,6 +112,18 @@ int main(void)
 
 	read_config(&flightCompConfig);
 
+	if(IS_POST_MAIN(flightCompConfig.values.flags)){
+
+		flightCompConfig.values.state = STATE_IN_FLIGHT_POST_MAIN;
+	}
+	else if(IS_POST_DROGUE(flightCompConfig.values.flags)){
+
+		flightCompConfig.values.state = STATE_IN_FLIGHT_POST_APOGEE;
+	}
+	else if(IS_PRE_DROGUE(flightCompConfig.values.flags)){
+
+		flightCompConfig.values.state = STATE_IN_FLIGHT_PRE_APOGEE;
+	}
 
 	uint32_t end_Address = scan_flash(&flash);
 	sprintf(lines,"end address :%ld \n",end_Address);
@@ -153,7 +166,10 @@ int main(void)
 	tasks.huart_ptr = &huart6_ptr;
 	tasks.flightCompConfig = &flightCompConfig;
 
-	flightCompConfig.values.state = STATE_LAUNCHPAD_ARMED; // CHANGE TO STATE_LAUNCHPAD !!!!!
+	if(!IS_IN_FLIGHT(flightCompConfig.values.flags)){
+
+
+	flightCompConfig.values.state = STATE_LAUNCHPAD; // CHANGE TO STATE_LAUNCHPAD !!!!!
 	//init_bmp(&flightCompConfig);
 	char imu_good = testIMU();
 	char bmp_good = testpress();
@@ -161,7 +177,7 @@ int main(void)
 	if(imu_good == 1 && bmp_good==1){
 		HAL_Delay(1000);
 
-		buzz(500);
+		buzz(500); //CHANGE TO 2 SECONDS !!!!!
 	}
 	else{
 
@@ -171,6 +187,8 @@ int main(void)
 			HAL_Delay(500);
 			flightCompConfig.values.state = STATE_XTRACT;
 		}
+	}
+
 	}
 	// testFlash(&flash);
 
@@ -254,6 +272,13 @@ int main(void)
 	vTaskSuspend(tasks.loggingTask_h);
 	vTaskSuspend(tasks.timerTask_h);
 	/* Start scheduler -- comment to not use FreeRTOS */
+
+
+
+
+
+
+
 	osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */

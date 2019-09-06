@@ -513,7 +513,7 @@ void configure(char* command,xtractParams * params){
 						"\t[k] - set temperature oversampling (0,2,4,8,16,32) \r\n"
 						"\t[l] - set BMP388 IIR filter coefficient (0,1,3,7,15,31,63,127) \r\n"
 						"\t[m] - Read the current settings\r\n"
-						"\t[n] - Calibrate altitude\r\n"
+						"\t[n] - Set if in flight (1/0)\r\n"
 						);
 
 	}
@@ -1045,11 +1045,27 @@ void configure(char* command,xtractParams * params){
 	}
 	else if (command[0] == 'n'){
 
-		calibrate_bmp(config);
-		sprintf(output,"Calibrated altitude calculation!\n");
-		transmit_line(uart,output);
 
+		char val_str[10];
 
+		strcpy(val_str,&command[1]);
+
+		int value = atoi(val_str);
+
+		switch(value){
+
+		case 0:
+			sprintf(output,"Setting to not in flight.\n");
+			transmit_line(uart,output);
+			config->values.flags &= ~(0x1D);
+			break;
+		case 1:
+			sprintf(output,"Setting to in flight.\n");
+			transmit_line(uart,output);
+			config->values.flags |= (0x01);
+			break;
+
+		}
 	}
 	else{
 		sprintf(output, "Command [%s] not recognized.", command);
@@ -1075,7 +1091,8 @@ void read(xtractParams * params){
 	vTaskDelay(pdMS_TO_TICKS(1000*10));	//Delay 10 seconds
 
 	HAL_GPIO_WritePin(USR_LED_PORT,USR_LED_PIN,GPIO_PIN_SET);
-	while (bytesRead < scan_flash(flash)){
+	uint32_t endAddress = scan_flash(flash);
+	while (bytesRead < endAddress){
 
 		read_page(flash,currentAddress,buffer,256*5);
 
