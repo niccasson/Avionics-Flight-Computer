@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+{% endblock %}
+
+
+{% block content %}
+
+    <div >
+
+        <div class="serialSettings">
+
+            <form>
+
+                <label> Log File Name <input id="logFileNameEntry" value="UMSATS_ROCKET"></label>
+                <label> CSV File Name<input id="csvFileNameEntry" value="AvionicsData"></label>
+
+            </form>
+
+
+        </div>
+        <div>
+        <button id="downloadButton" class="main_button"> Start Download</button>
+        </div>
+
+        <div>
+        <button id="stopDownloadButton" class="main_button"> Stop Download</button>
+        </div>
+    </div>
+    <script src="../static/download_script.js"></script>
+{% endblock %}

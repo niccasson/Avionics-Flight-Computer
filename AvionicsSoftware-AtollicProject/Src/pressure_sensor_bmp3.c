@@ -17,9 +17,8 @@
 // INCLUDES
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <pressure_sensor_bmp3.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEFINITIONS AND MACROS
@@ -50,7 +49,7 @@ static bmp3_sensor* static_bmp3_sensor;
  *   - os_pres: oversampling rate for pressure
  *   - odr: output data rate
  */
-static uint8_t bmp3_config(uint8_t filter, uint8_t os_pres, uint8_t odr);
+static uint8_t bmp3_config(uint8_t filter, uint8_t os_pres,uint8_t os_temp, uint8_t odr);
 
 static void delay_ms(uint32_t period_ms);
 
@@ -113,7 +112,7 @@ int8_t get_sensor_data(struct bmp3_dev *dev, struct bmp3_data* data)
     return rslt;
 }
 
-static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
+static uint8_t bmp3_config(uint8_t iir,uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 	int8_t rslt;
 	struct bmp3_dev *dev = static_bmp3_sensor->bmp_ptr;
 
@@ -127,8 +126,9 @@ static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 	dev->settings.odr_filter.press_os = os_pres;
 	dev->settings.odr_filter.temp_os = os_temp;
 	dev->settings.odr_filter.odr = odr;
+	dev->settings.odr_filter.iir_filter = iir;
 	/* Assign the settings which needs to be set in the sensor */
-	settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL;
+	settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_PRESS_OS_SEL | BMP3_TEMP_OS_SEL | BMP3_ODR_SEL| BMP3_IIR_FILTER_SEL;
 	rslt = bmp3_set_sensor_settings(settings_sel, dev);
 
 	/* Set the power mode to normal mode */
@@ -137,33 +137,81 @@ static uint8_t bmp3_config(uint8_t os_pres, uint8_t os_temp, uint8_t odr){
 
 	return rslt;
 }
+void init_bmp(configData_t * configParams){
+
+	bmp3_sensor* bmp3_sensor_ptr = malloc(sizeof(bmp3_sensor));
+	int8_t rslt;
+	rslt = init_bmp3_sensor(bmp3_sensor_ptr);
+	if(rslt != 0){
+		while(1){}
+	}
+	rslt = bmp3_config(configParams->values.iir_coef,configParams->values.pres_os, configParams->values.temp_os, configParams->values.bmp_odr);
+	if(rslt != 0){
+		while(1){}
+	}
+}
+
+void calibrate_bmp(configData_t * configParams){
+
+	bmp_data_struct dataStruct;
+	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+	configParams->values.ref_alt=0;
+	configParams->values.ref_pres = (uint32_t)dataStruct.data.pressure/100;
+}
 
 void vTask_pressure_sensor_bmp3(void *pvParameters){
+
+	PressureTaskParams * params = (PressureTaskParams *) pvParameters;
+	QueueHandle_t bmp_queue = params->bmp388_queue;
+	uart = params->huart;	//Get uart for printing to console
+	configData_t * configParams = params->flightCompConfig;
+
+
 	int8_t rslt;
 
 	/* Variable used to store the compensated data */
-	struct bmp3_data data;
+	bmp_data_struct dataStruct;
 
-    uart = (UART_HandleTypeDef*) pvParameters; //Get uart for printing to console
+	TickType_t prevTime;
+
 
 	bmp3_sensor* bmp3_sensor_ptr = malloc(sizeof(bmp3_sensor));
+
 	rslt = init_bmp3_sensor(bmp3_sensor_ptr);
 	bmp3_print_rslt("init_bmp3_sensor", rslt);
 
     /* Configuration */
-	rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
+	//rslt = bmp3_config(BMP3_IIR_FILTER_COEFF_15,BMP3_OVERSAMPLING_4X, BMP3_OVERSAMPLING_4X, BMP3_ODR_50_HZ);
+	rslt = bmp3_config(configParams->values.iir_coef,configParams->values.pres_os, configParams->values.temp_os, configParams->values.bmp_odr);
+	if(rslt != 0){
+		while(1){}
+	}
+	prevTime =xTaskGetTickCount();
+	int i;
+	for(i=0;i<3;i++){
+		get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+		vTaskDelayUntil(&prevTime,configParams->values.data_rate);
+	}
 
-
+	if(!IS_IN_FLIGHT(configParams->values.flags)){
+		get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+		configParams->values.ref_pres = dataStruct.data.pressure/100;
+	}
     while(1){
-    	get_sensor_data(static_bmp3_sensor->bmp_ptr, &data);
 
-    	sprintf(buf, "Pressure: %d [Pa]", data.pressure);
-    	transmit_line(uart, buf);
+    	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
+    	dataStruct.time_ticks = xTaskGetTickCount();
 
-    	sprintf(buf, "Temperature: %ld [0.01 C]", data.temperature);
-    	transmit_line(uart, buf);
+    	xQueueSend(bmp_queue,&dataStruct,1);
 
-    	static_bmp3_sensor->bmp_ptr->delay_ms(1000);
+    	//sprintf(buf, "Pressure: %ld [Pa] at time: %d", (uint32_t)dataStruct.data.pressure,dataStruct.time_ticks);
+    	//sprintf(buf, "P %d",dataStruct.time_ticks);
+    	//transmit_line(uart, buf);
+
+    	//sprintf(buf, "Temperature: %ld [0.01 C]", (int32_t)dataStruct.data.temperature);
+    	//transmit_line(uart, buf);
+
+    	vTaskDelayUntil(&prevTime,configParams->values.data_rate);
     }
 }
 
@@ -181,6 +229,7 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
 static void delay_ms(uint32_t period_ms)
 {
     vTaskDelay((TickType_t) period_ms);
+	//HAL_Delay(period_ms);
 }
 
 /*!

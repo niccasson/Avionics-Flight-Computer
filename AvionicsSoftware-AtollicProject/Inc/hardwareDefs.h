@@ -30,6 +30,10 @@
 #define USR_PB_PIN				GPIO_PIN_1
 #define USR_PB_PORT				GPIOB
 
+//Buzzer
+#define BUZZER_PORT				GPIOB
+#define BUZZER_PIN				GPIO_PIN_2
+
 
 //User GPIO
 #define USR_GPIO_P3_4_PIN		GPIO_PIN_0		//Unused GPIO on P3	header, pin closest to crystal.
@@ -37,6 +41,7 @@
 
 #define USR_GPIO_P3_3_PIN		GPIO_PIN_1		//Unused GPIO on P3 header, pin second closest to crystal (next to other pin).
 #define USR_GPIO_P3_3_PORT		GPIOC
+
 //UART 6
 #define UART_TX_PIN				GPIO_PIN_11
 #define UART_TX_PORT			GPIOA
@@ -45,6 +50,7 @@
 #define UART_RX_PORT			GPIOA
 
 //Flash Memory on SPI1
+
 #define FLASH_SPI_PORT			GPIOA
 
 #define FLASH_SPI_SCK_PIN		GPIO_PIN_5
@@ -61,7 +67,9 @@
 #define FLASH_HOLD_PORT			GPIOC
 
 
+
 //Pressure Sensor on SPI2
+
 #define PRES_SPI_PORT			GPIOB
 
 #define PRES_SPI_SCK_PIN		GPIO_PIN_13
@@ -75,7 +83,9 @@
 #define PRES_INT_PORT			GPIOC
 
 
+
 //IMU on SPI3
+
 #define IMU_SPI_PORT			GPIOC
 
 #define IMU_SPI_SCK_PIN			GPIO_PIN_10
@@ -94,18 +104,31 @@
 #define IMU_GYRO_INT_PIN  		GPIO_PIN_8
 #define IMU_GYRO_INT_PORT 		GPIOB
 
-//Recovery Circuit
-#define RECOV_ACTIVATE_PIN		GPIO_PIN_8	//Output
-#define RECOV_ACTIVATE_PORT		GPIOA
+//Recovery Circuit (driver1 -> drogue | driver2 -> main)
+#define RECOV_DROGUE_ACTIVATE_PIN		GPIO_PIN_2	//Output
+#define RECOV_DROGUE_ACTIVATE_PORT		GPIOA
 
-#define RECOV_ENABLE_PIN		GPIO_PIN_9	//Output
-#define RECOV_ENABLE_PORT		GPIOA
+#define RECOV_DROGUE_ENABLE_PIN			GPIO_PIN_1	//Output
+#define RECOV_DROGUE_ENABLE_PORT		GPIOA
 
-#define RECOV_OVERCURRENT_PIN	GPIO_PIN_10	//Input
-#define RECOV_OVERCURRENT_PORT	GPIOA
+#define RECOV_DROGUE_OVERCURRENT_PIN	GPIO_PIN_0	//Input
+#define RECOV_DROGUE_OVERCURRENT_PORT	GPIOA
 
-#define RECOV_CONTINUITY_PIN	GPIO_PIN_9	//Input
-#define RECOV_CONTINUITY_PORT	GPIOC
+#define RECOV_DROGUE_CONTINUITY_PIN		GPIO_PIN_3	//Input
+#define RECOV_DROGUE_CONTINUITY_PORT	GPIOA
+
+
+#define RECOV_MAIN_ACTIVATE_PIN			GPIO_PIN_8	//Output
+#define RECOV_MAIN_ACTIVATE_PORT		GPIOA
+
+#define RECOV_MAIN_ENABLE_PIN			GPIO_PIN_9	//Output
+#define RECOV_MAIN_ENABLE_PORT			GPIOA
+
+#define RECOV_MAIN_OVERCURRENT_PIN		GPIO_PIN_10	//Input
+#define RECOV_MAIN_OVERCURRENT_PORT		GPIOA
+
+#define RECOV_MAIN_CONTINUITY_PIN		GPIO_PIN_9	//Input
+#define RECOV_MAIN_CONTINUITY_PORT		GPIOC
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // ENUMS AND ENUM TYPEDEFS
@@ -136,4 +159,4 @@
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#endif // TEMPLATE_H
+#endif // HARDWARE_DEFS_H

@@ -109,6 +109,19 @@ void transmit_line(UART_HandleTypeDef* uart, char* message);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Description:
+//  Transmit bytes to UART port.
+//
+// Parameters:
+//  UART_HandleTypeDef* uart - UART port to transmit to
+//  uint8_t* bytes - A pointer to the bytes you want to send.
+//
+// Returns:
+//  VOID
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void transmit_bytes(UART_HandleTypeDef* uart, uint8_t *bytes, uint16_t numBytes);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Description:
 //	BLOCKING FUNCTION
 //  Receive message from UART port. Prints back what the user is typing so that they can see it. Their message ends when they press enter.
 //

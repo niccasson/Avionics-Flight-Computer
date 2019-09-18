@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-
+#include "main.h"
 #include <stm32f4xx_hal_uart_io.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ void MX_HAL_UART6_Init(UART_HandleTypeDef* uart){
 
 	   /* Create UART struct */
 	   uart->Instance = USART6;
-	   uart->Init.BaudRate = 9600;
+	   uart->Init.BaudRate = 115200;
 	   uart->Init.WordLength = UART_WORDLENGTH_8B;
 	   uart->Init.StopBits = UART_STOPBITS_1;
 	   uart->Init.Parity = UART_PARITY_NONE;
@@ -158,6 +158,14 @@ void transmit_line(UART_HandleTypeDef* uart, char* message){
 	}
 }
 
+void transmit_bytes(UART_HandleTypeDef* uart, uint8_t *bytes,uint16_t numBytes){
+
+	if(HAL_UART_Transmit(uart, bytes, numBytes, TIMEOUT_MAX) != HAL_OK){
+					//Do something meaningful here...
+		while(1);
+	}
+}
+
 char* receive_command(UART_HandleTypeDef* uart){
 	uint8_t c; //key pressed character
 	int i;
@@ -173,20 +181,24 @@ char* receive_command(UART_HandleTypeDef* uart){
 		}
 
 		//print the character back.
-		if(HAL_UART_Transmit(uart, &c, sizeof(c), TIMEOUT_MAX) != HAL_OK){
-				//Do something meaningful here...
-		}
+		if(c != '\0'){
+
+			if(HAL_UART_Transmit(uart, &c, sizeof(c), TIMEOUT_MAX) != HAL_OK){
+					//Do something meaningful here...
+			}
 
 		//adjust our buffer
-		if(c == '\r'){ //return entered, command is complete
-			break;
-		}
-		else if(c == 127){ //User hits backspace, clear from buffer and display (backspace is \177 or 127)
-			if(i > 0){ i--; } //don't let i become negative
-			buffrx[i] = '\0';
-		}
-		else{ //add character to end of receive buffer
-			buffrx[i++] = c;
+			if(c == '\r'){ //return entered, command is complete
+				break;
+			}
+			else if(c == 127){ //User hits backspace, clear from buffer and display (backspace is \177 or 127)
+				if(i > 0){ i--; } //don't let i become negative
+				buffrx[i] = '\0';
+			}
+			else{ //add character to end of receive buffer
+				buffrx[i++] = c;
+			}
+
 		}
 	}
 
