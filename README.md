@@ -2,6 +2,8 @@
 Flight Computer Software for the 2019 Rocket.
 
 ## Versions
+#### v2.0.0 - 2020 Spaceport America Cup Flight Software
+
 #### v1.0.0 - 2019 Spaceport America Cup Flight Software
 - includes custom flight computer software
 - includes PC Tools interface for configuring, and downloading data from flight computer
