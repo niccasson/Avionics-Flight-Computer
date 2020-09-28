@@ -52,10 +52,12 @@ alt_value altitude_approx(float pressure, float temperature,configData_t * confi
 //	double temp_term = temperature / lapse_rate_static;
 //	double press_term = (pressure / reference_pressure) * const_exp_term - 1;
 //	return (temp_term * press_term) + reference_altitude;
-	float p_term = pow((config->values.ref_pres/(pressure/100)),(1/5.257F))-1;
+	float exp_term = ((UNIVERSAL_GAS_CONST * lapse_rate_static) / (GRAVITATIONAL_CONST * MOLAR_MASS_AIR));
+	//float p_term = pow((config->values.ref_pres/(pressure/100)),(1/5.257F))-1;
+	float p_term = pow((config->values.ref_pres/(pressure/100)), exp_term) - 1;
 	float t_term = (temperature/100)+273.15F;
 	alt_value result;
-	result.float_val =(p_term*t_term)/0.0065F+config->values.ref_alt;
+	result.float_val =(p_term*t_term)/lapse_rate_static + config->values.ref_alt;
 	return result;
 
 }

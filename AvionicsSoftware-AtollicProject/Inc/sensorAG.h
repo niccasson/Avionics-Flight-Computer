@@ -83,4 +83,6 @@ void vTask_sensorAG(void *param);
 int8_t accel_config(struct bmi08x_dev *bmi088dev,configData_t * configParams, int8_t rslt);
 int8_t gyro_config(struct bmi08x_dev *bmi088dev,configData_t * configParams, int8_t rslt);
 
+void update_IMU_data_launchpad(imu_data_struct *curr_imu_reading);
+
 #endif // SENSOR_AG_H

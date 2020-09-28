@@ -45,7 +45,8 @@ static const float reference_pressure = 101325; // [Pa] Static pressure at b=0 l
 static const float reference_altitude = 0; // [m] height at bottom of layer b
 
 static const float temperature_static = 288.15; // [K] static temperature at b=0 level
-static const float lapse_rate_static = -0.0065; // [K/m]  standard temperature laspe rate (K/m) in International Standard Atmosphere
+//Doubling the lapse_rate_static fixed the data discrepancy between COTS and SRAD
+static const float lapse_rate_static = -0.0065*2; // [K/m]  standard temperature laspe rate (K/m) in International Standard Atmosphere
 static const float UNIVERSAL_GAS_CONST = 8.3144598; // [J/mol/K] universal gas constant
 static const float GRAVITATIONAL_CONST = 9.80665; // [m/s^2] acceleration due to gravity
 static const float MOLAR_MASS_AIR = 0.0289644; // [kg/mol] molar mass of Earth's air

@@ -202,7 +202,10 @@ void vTask_pressure_sensor_bmp3(void *pvParameters){
     	get_sensor_data(static_bmp3_sensor->bmp_ptr, &dataStruct.data);
     	dataStruct.time_ticks = xTaskGetTickCount();
 
-    	xQueueSend(bmp_queue,&dataStruct,1);
+    	//Only send data to the queue after launch has been detected to avoid circular buffer
+    	if(IS_IN_FLIGHT(configParams->values.flags)){
+    		xQueueSend(bmp_queue,&dataStruct,1);
+    	}
 
     	//sprintf(buf, "Pressure: %ld [Pa] at time: %d", (uint32_t)dataStruct.data.pressure,dataStruct.time_ticks);
     	//sprintf(buf, "P %d",dataStruct.time_ticks);

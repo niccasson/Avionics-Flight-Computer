@@ -214,7 +214,14 @@ void loggingTask(void * params){
 
 				measurement.data[i] = 0;
 			}
-			continue;
+			//No data in IMU queue and rocket not in flight
+			if(!IS_IN_FLIGHT(configParams->values.flags)){
+				update_IMU_data_launchpad(&imu_reading); //Update IMU data struct in order to detect launch
+			}
+			//No data in IMU queue and rocket is in flight
+			else{
+				continue;
+			}
 		}
 
 		/* BMP READING*******************************************************************************************************************************/
@@ -284,14 +291,13 @@ void loggingTask(void * params){
 			continue;
 		}
 
-
+		//Check if rocket has launched
 		if(configParams->values.state == STATE_LAUNCHPAD_ARMED && imu_reading.data_acc.x>10892){
 			
 			buzz(250);
 			vTaskResume(*timerTask_h); //start fixed timers.
 			configParams->values.state = STATE_IN_FLIGHT_PRE_APOGEE;
 			configParams->values.flags = configParams->values.flags |  0x04;
-			//configParams->values.state = STATE_IN_FLIGHT_POST_APOGEE;
 			//Record the launch event.
 			uint32_t header = (measurement.data[0]<<16)+(measurement.data[1]<<8) + measurement.data[2];
 			header |= LAUNCH_DETECT;

@@ -202,12 +202,12 @@ int main(void)
 	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
 
-	if(xTaskCreate(	vTask_timer, 	 /* Pointer to the function that implements the task */
+	if(xTaskCreate(	vTask_timer, /* Pointer to the function that implements the task */
 	      		  	"timer", /* Text name for the task. This is only to facilitate debugging */
-	      		  	 1000,		 /* Stack depth - small microcontrollers will use much less stack than this */
-	  				 NULL,	/* pointer to the huart object */
-	  				 1,			 /* This task will run at priorirt 2. */
-	  				 &tasks.timerTask_h		 /* This example does not use the task handle. */
+	      		  	 1000, /* Stack depth - small microcontrollers will use much less stack than this */
+	  				 NULL, /* pointer to the huart object */
+	  				 1, /* This task will run at priorirt 2. */
+	  				 &tasks.timerTask_h /* This example does not use the task handle. */
 	        	  	  ) == -1){
 	  	  Error_Handler();
 	    }

@@ -67,6 +67,7 @@ struct bmi08x_dev bmi088dev = {
 ////configures the gyroscope with hard-coded specifications
 //int8_t gyro_config(struct bmi08x_dev *bmi088dev, int8_t rslt);
 
+imu_data_struct dataStruct;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FUNCTIONS
@@ -86,8 +87,6 @@ void vTask_sensorAG(void *param){
 
 
 	TickType_t prevTime;
-
-	imu_data_struct dataStruct;
 
 	//initialize the SPI
 	spi3_init(&hspi); //use the already made SPI interface
@@ -140,7 +139,10 @@ void vTask_sensorAG(void *param){
 		rslt = bmi08g_get_data(&dataStruct.data_gyro, &bmi088dev);
 		dataStruct.time_ticks = xTaskGetTickCount();
 
-		xQueueSend(queue,&dataStruct,1);
+		//Only send imu data to the queue here if rocket is in flight otherwise, handled by logging task
+		if(IS_IN_FLIGHT(configParams->values.flags)){
+			xQueueSend(queue,&dataStruct,1);
+		}
 
 		//char data_str[100];
 		//sprintf(data_str,"x: %d y: %d z: %d  | Rx: %d Ry: %d Rz: %d, at time %lu",dataStruct.data_acc.x,dataStruct.data_acc.y,dataStruct.data_acc.z,dataStruct.data_gyro.x,dataStruct.data_gyro.y,dataStruct.data_gyro.z,dataStruct.time_ticks);
@@ -247,4 +249,10 @@ int8_t user_spi_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_
 
 void delay(uint32_t period){
 	vTaskDelay(pdMS_TO_TICKS(period)); // wait for the given amount of milliseconds
+}
+
+void update_IMU_data_launchpad(imu_data_struct *curr_imu_reading){
+	curr_imu_reading->data_acc = dataStruct.data_acc;
+	curr_imu_reading->data_gyro = dataStruct.data_gyro;
+	curr_imu_reading->time_ticks = dataStruct.time_ticks;
 }
